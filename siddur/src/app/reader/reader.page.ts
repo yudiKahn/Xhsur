@@ -31,10 +31,18 @@ const PDF_ASSET_PATH = '/assets/siddur/tehilat-hashem.pdf';
 const PDF_WORKER_PATH = '/assets/pdfjs/pdf.worker.min.mjs';
 const PAGE_PRELOAD_DISTANCE = 2;
 const MAX_RENDER_PIXEL_RATIO = 2;
+const MAX_ZOOM_RATIO = 3;
+
+type SwiperZoom = {
+  scale?: number;
+  out: () => void;
+};
 
 type SwiperElement = HTMLElement & {
   swiper?: {
     activeIndex: number;
+    allowTouchMove: boolean;
+    zoom: SwiperZoom;
     update: () => void;
     slideTo: (index: number, speed?: number, runCallbacks?: boolean) => void;
   };
@@ -108,7 +116,14 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   activeSlideIndex = 0;
   isPdfAvailable = false;
   isPdfLoading = true;
+  isZoomed = false;
   loadErrorMessage = '';
+  readonly zoomOptions = {
+    enabled: true,
+    minRatio: 1,
+    maxRatio: MAX_ZOOM_RATIO,
+    toggle: true,
+  };
 
   private pdfDocument?: PdfDocumentProxy;
   private pdfLoadingTask?: {
@@ -156,7 +171,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onSwiperSlideChange(): void {
-    const swiper = this.swiperRef?.nativeElement.swiper;
+    const swiper = this.getSwiper();
     if (!swiper || this.isRecentering || !this.preset) {
       return;
     }
@@ -174,10 +189,20 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.currentPage = nextPage;
+    this.syncZoomState(1);
     this.syncVisiblePages();
     this.updateLoadingState();
     this.recenterSwiper();
     void this.prepareVisiblePages();
+  }
+
+  onZoomChange(event: Event): void {
+    if (!(event instanceof CustomEvent)) {
+      return;
+    }
+
+    const [, scale] = event.detail as [unknown, number?, unknown?, unknown?];
+    this.syncZoomState(scale ?? 1);
   }
 
   trackByPage(_index: number, pageNumber: number): number {
@@ -194,6 +219,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.resetZoom();
     this.renderRevision += 1;
     this.clearPrewarmTimeout();
     this.clearRenderedPages();
@@ -452,7 +478,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private recenterSwiper(): void {
-    const swiper = this.swiperRef?.nativeElement.swiper;
+    const swiper = this.getSwiper();
     if (!swiper) {
       return;
     }
@@ -465,6 +491,25 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
         this.isRecentering = false;
       });
     });
+  }
+
+  private getSwiper(): SwiperElement['swiper'] {
+    return this.swiperRef?.nativeElement.swiper;
+  }
+
+  private resetZoom(): void {
+    const swiper = this.getSwiper();
+    swiper?.zoom.out();
+    this.syncZoomState(1);
+  }
+
+  private syncZoomState(scale: number): void {
+    this.isZoomed = scale > 1.01;
+    const swiper = this.getSwiper();
+    if (swiper) {
+      swiper.allowTouchMove = true;
+    }
+    this.refreshView();
   }
 
   private clearRenderedPages(): void {

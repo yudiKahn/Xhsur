@@ -26,7 +26,7 @@
       }
 
       @if (isPdfAvailable && !loadErrorMessage) {
-        <section #stageRef class="reader-stage">
+        <section #stageRef class="reader-stage" [class.reader-stage-zoomed]="isZoomed">
           @if (isPdfLoading) {
             <div class="page-loading">
               <ion-spinner name="crescent"></ion-spinner>
@@ -37,20 +37,24 @@
             #swiperRef
             class="reader-swiper"
             [attr.initial-slide]="activeSlideIndex"
+            [zoom]="zoomOptions"
             (swiperslidechange)="onSwiperSlideChange()"
+            (zoomchange)="onZoomChange($event)"
           >
             @for (pageNumber of visiblePages; track trackByPage($index, pageNumber)) {
               <swiper-slide>
                 <div class="page-slide-shell">
                   @if (getRenderedPage(pageNumber); as renderedPage) {
-                    <img
-                      class="pdf-page-image"
-                      [src]="renderedPage.src"
-                      [width]="renderedPage.width"
-                      [height]="renderedPage.height"
-                      alt=""
-                      draggable="false"
-                    />
+                    <div class="swiper-zoom-container page-zoom-container">
+                      <img
+                        class="pdf-page-image"
+                        [src]="renderedPage.src"
+                        [width]="renderedPage.width"
+                        [height]="renderedPage.height"
+                        alt=""
+                        draggable="false"
+                      />
+                    </div>
                   } @else {
                     <div class="page-placeholder"></div>
                   }

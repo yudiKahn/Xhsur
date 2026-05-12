@@ -18,6 +18,10 @@
   background: #ffffff;
 }
 
+.reader-stage-zoomed {
+  touch-action: none;
+}
+
 .reader-swiper {
   width: 100vw;
   height: 100%;
@@ -41,6 +45,15 @@
   justify-content: center;
   background: #ffffff;
   overflow: hidden;
+}
+
+.page-zoom-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
 }
 
 .pdf-page-image {
