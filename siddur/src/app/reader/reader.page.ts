@@ -12,6 +12,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
+  ActionSheetButton,
+  ActionSheetController,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -19,14 +21,18 @@ import {
   IonContent,
   IonSpinner,
 } from '@ionic/angular/standalone';
-import { PrayerPreset } from '../models/prayer-preset.model';
+import { PrayerPreset, PrayerSubPreset } from '../models/prayer-preset.model';
 import { PrayerPresetsService } from '../services/prayer-presets.service';
+import {
+  PdfDocumentProxy,
+  PdfPageProxy,
+  SiddurPdfService,
+} from '../services/siddur-pdf.service';
 
-const PDF_ASSET_PATH = '/assets/siddur/tehilat-hashem.pdf';
-const PDF_WORKER_PATH = '/assets/pdfjs/pdf.worker.min.mjs';
 const PAGE_PRELOAD_DISTANCE = 5;
 const MAX_RENDER_PIXEL_RATIO = 2;
 const MAX_ZOOM_RATIO = 3;
+const LONG_PRESS_DURATION_MS = 500;
 
 type SwiperZoom = {
   scale?: number;
@@ -44,34 +50,6 @@ type SwiperElement = HTMLElement & {
     update: () => void;
     slideTo: (index: number, speed?: number, runCallbacks?: boolean) => void;
   };
-};
-
-type PdfJsModule = {
-  GlobalWorkerOptions: {
-    workerSrc: string;
-  };
-  getDocument: (src: { data: Uint8Array; disableWorker: boolean }) => {
-    promise: Promise<PdfDocumentProxy>;
-    destroy?: () => Promise<void> | void;
-  };
-};
-
-type PdfDocumentProxy = {
-  numPages: number;
-  getPage: (pageNumber: number) => Promise<PdfPageProxy>;
-  destroy: () => Promise<void> | void;
-};
-
-type PdfPageProxy = {
-  getViewport: (params: { scale: number }) => { width: number; height: number };
-  render: (params: {
-    canvasContext: CanvasRenderingContext2D;
-    viewport: { width: number; height: number };
-  }) => {
-    promise: Promise<void>;
-    cancel?: () => void;
-  };
-  cleanup?: () => void;
 };
 
 type RenderedPage = {
@@ -114,21 +92,20 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   readonly maxZoomRatio = MAX_ZOOM_RATIO;
 
   private pdfDocument?: PdfDocumentProxy;
-  private pdfLoadingTask?: {
-    promise: Promise<PdfDocumentProxy>;
-    destroy?: () => Promise<void> | void;
-  };
-  private pdfJsModulePromise?: Promise<PdfJsModule>;
   private readonly renderCache = new Map<number, RenderedPage>();
   private readonly pendingRenders = new Set<number>();
   private renderRevision = 0;
   private isRecentering = false;
   private prewarmTimeoutId?: number;
   private pendingPage?: number;
+  private longPressTimeoutId?: number;
+  private readonly activePointerIds = new Set<number>();
 
   private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly actionSheetController = inject(ActionSheetController);
   private readonly router = inject(Router);
   private readonly prayerPresetsService = inject(PrayerPresetsService);
+  private readonly siddurPdfService = inject(SiddurPdfService);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
   async ngOnInit(): Promise<void> {
@@ -156,8 +133,8 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.renderRevision += 1;
     this.clearPrewarmTimeout();
+    this.clearLongPressTimeout();
     this.clearRenderedPages();
-    void this.destroyPdfSession();
   }
 
   onSwiperSlideChange(): void {
@@ -248,6 +225,44 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     this.syncZoomState(clampedScale);
   }
 
+  onStagePointerDown(event: PointerEvent): void {
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+      return;
+    }
+
+    this.activePointerIds.add(event.pointerId);
+
+    if (!this.canOpenSubPresetSheet() || this.isZoomed || this.activePointerIds.size > 1) {
+      this.clearLongPressTimeout();
+      return;
+    }
+
+    this.clearLongPressTimeout();
+    this.longPressTimeoutId = window.setTimeout(() => {
+      void this.presentSubPresets();
+    }, LONG_PRESS_DURATION_MS);
+  }
+
+  onStagePointerMove(): void {
+    if (this.activePointerIds.size > 1 || this.isZoomed) {
+      this.clearLongPressTimeout();
+    }
+  }
+
+  onStagePointerRelease(event: PointerEvent): void {
+    this.activePointerIds.delete(event.pointerId);
+    this.clearLongPressTimeout();
+  }
+
+  onStageContextMenu(event: Event): void {
+    if (!this.canOpenSubPresetSheet()) {
+      return;
+    }
+
+    event.preventDefault();
+    void this.presentSubPresets();
+  }
+
   trackByPage(_index: number, pageNumber: number): number {
     return pageNumber;
   }
@@ -278,28 +293,24 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     this.loadErrorMessage = '';
 
     try {
-      const response = await fetch(PDF_ASSET_PATH);
-      if (!response.ok) {
-        throw new Error(`Failed to load PDF (${response.status}).`);
-      }
-
-      const pdfData = new Uint8Array(await response.arrayBuffer());
-      const pdfJs = await this.getPdfJsModule();
-      pdfJs.GlobalWorkerOptions.workerSrc = PDF_WORKER_PATH;
-      this.pdfLoadingTask = pdfJs.getDocument({
-        data: pdfData,
-        disableWorker: false,
-      });
-      this.pdfDocument = await this.pdfLoadingTask.promise;
+      this.pdfDocument = await this.siddurPdfService.getDocument();
       this.isPdfAvailable = true;
       this.loadErrorMessage = '';
       this.refreshView();
-      window.setTimeout(() => {
-        this.initializeSwiper();
-        this.recenterSwiper();
-        void this.prepareVisiblePages();
-      });
-      await this.prepareVisiblePages();
+
+      await this.waitForStageReady();
+      this.initializeSwiper();
+      this.recenterSwiper();
+
+      const revision = this.renderRevision;
+      await this.ensurePageRendered(this.currentPage, revision);
+      if (revision !== this.renderRevision) {
+        return;
+      }
+
+      this.updateLoadingState();
+      this.schedulePrewarm(revision);
+      void this.prepareVisiblePages();
     } catch (error) {
       this.isPdfAvailable = false;
       this.isPdfLoading = false;
@@ -307,14 +318,6 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
         error instanceof Error ? error.message : 'Failed to load PDF.';
       this.refreshView();
     }
-  }
-
-  private async getPdfJsModule(): Promise<PdfJsModule> {
-    this.pdfJsModulePromise ??= import(
-      '../../../node_modules/pdfjs-dist/legacy/build/pdf.mjs'
-    ) as unknown as Promise<PdfJsModule>;
-
-    return this.pdfJsModulePromise;
   }
 
   private resolveInitialPage(preset: PrayerPreset): number {
@@ -352,7 +355,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const revision = this.renderRevision;
-    const pagesToPrepare = this.getPagesToPrepare();
+    const pagesToPrepare = this.getPagesToPrepare().filter((pageNumber) => pageNumber !== this.currentPage);
     this.evictStalePages();
 
     await Promise.all(pagesToPrepare.map((pageNumber) => this.ensurePageRendered(pageNumber, revision)));
@@ -569,6 +572,9 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
 
   private syncZoomState(scale: number): void {
     this.isZoomed = scale > 1.01;
+    if (this.isZoomed) {
+      this.clearLongPressTimeout();
+    }
     const swiper = this.getSwiper();
     if (swiper) {
       swiper.allowTouchMove = !this.isZoomed;
@@ -590,12 +596,95 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     this.prewarmTimeoutId = undefined;
   }
 
-  private async destroyPdfSession(): Promise<void> {
-    await this.pdfDocument?.destroy();
-    await this.pdfLoadingTask?.destroy?.();
-  }
-
   private refreshView(): void {
     this.changeDetectorRef.detectChanges();
+  }
+
+  private async waitForStageReady(): Promise<void> {
+    if (this.stageRef?.nativeElement) {
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
+  }
+
+  private canOpenSubPresetSheet(): boolean {
+    return !!this.preset?.subPresets?.length;
+  }
+
+  private async presentSubPresets(): Promise<void> {
+    const preset = this.preset;
+    const subPresets = preset?.subPresets;
+    if (!preset || !subPresets?.length) {
+      return;
+    }
+
+    this.clearLongPressTimeout();
+
+    const actionSheet = await this.actionSheetController.create({
+      header: preset.titleHe,
+      buttons: [
+        ...subPresets.map((subPreset) => this.toActionSheetButton(subPreset)),
+        {
+          text: 'ביטול',
+          role: 'cancel',
+        },
+      ],
+    });
+
+    await actionSheet.present();
+  }
+
+  private toActionSheetButton(subPreset: PrayerSubPreset): ActionSheetButton {
+    return {
+      text: subPreset.titleHe,
+      handler: () => {
+        void this.jumpToPage(subPreset.startPage);
+      },
+    };
+  }
+
+  private async jumpToPage(pageNumber: number): Promise<void> {
+    const preset = this.preset;
+    if (!preset) {
+      return;
+    }
+
+    const targetPage = Math.min(preset.endPage, Math.max(preset.startPage, pageNumber));
+    if (targetPage === this.currentPage) {
+      return;
+    }
+
+    this.currentPage = targetPage;
+    this.pendingPage = undefined;
+    this.renderRevision += 1;
+    this.clearPrewarmTimeout();
+    this.resetZoom();
+    this.syncVisiblePages();
+    this.updateLoadingState();
+    this.recenterSwiper();
+
+    await this.router.navigate([], {
+      relativeTo: this.activatedRoute,
+      queryParams: { page: targetPage },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+
+    await this.ensurePageRendered(targetPage, this.renderRevision);
+    await this.prepareVisiblePages();
+  }
+
+  private clearLongPressTimeout(): void {
+    if (this.longPressTimeoutId === undefined) {
+      return;
+    }
+
+    window.clearTimeout(this.longPressTimeoutId);
+    this.longPressTimeoutId = undefined;
   }
 }

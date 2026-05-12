@@ -1,5 +1,8 @@
 import { Injectable } from '@angular/core';
-import { PrayerPreset } from '../models/prayer-preset.model';
+import { PrayerPreset, PrayerSubPreset } from '../models/prayer-preset.model';
+
+const sortSubPresets = (subPresets: PrayerSubPreset[]): PrayerSubPreset[] =>
+  [...subPresets].sort((left, right) => left.order - right.order);
 
 const PRAYER_PRESETS: PrayerPreset[] = [
   {
@@ -9,6 +12,36 @@ const PRAYER_PRESETS: PrayerPreset[] = [
     startPage: 6,
     endPage: 86,
     order: 1,
+    subPresets: sortSubPresets([
+      {
+        id: 'birkot-hashachar',
+        titleHe: 'ברכות השחר',
+        titleEn: 'Birkot Hashachar',
+        startPage: 6,
+        order: 1,
+      },
+      {
+        id: 'korbanot',
+        titleHe: 'קרבנות',
+        titleEn: 'Korbanot',
+        startPage: 18,
+        order: 2,
+      },
+      {
+        id: 'hodu',
+        titleHe: 'הודו',
+        titleEn: 'Hodu',
+        startPage: 27,
+        order: 3,
+      },
+      {
+        id: 'yishtabach',
+        titleHe: 'ישתבח',
+        titleEn: 'Yishtabach',
+        startPage: 41,
+        order: 4,
+      },
+    ]),
   },
   {
     id: 'mincha',
@@ -33,10 +66,23 @@ const PRAYER_PRESETS: PrayerPreset[] = [
 })
 export class PrayerPresetsService {
   getAll(): PrayerPreset[] {
-    return [...PRAYER_PRESETS].sort((left, right) => left.order - right.order);
+    return [...PRAYER_PRESETS]
+      .sort((left, right) => left.order - right.order)
+      .map((preset) => ({
+        ...preset,
+        subPresets: preset.subPresets ? sortSubPresets(preset.subPresets) : undefined,
+      }));
   }
 
   getById(id: string): PrayerPreset | undefined {
-    return PRAYER_PRESETS.find((preset) => preset.id === id);
+    const preset = PRAYER_PRESETS.find((entry) => entry.id === id);
+    if (!preset) {
+      return undefined;
+    }
+
+    return {
+      ...preset,
+      subPresets: preset.subPresets ? sortSubPresets(preset.subPresets) : undefined,
+    };
   }
 }

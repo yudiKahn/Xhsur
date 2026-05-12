@@ -10,7 +10,8 @@ Angualr, Material Design, Ionic
 Use as much as Material design styles/Componenet.
 If custom CSS styles are needed, add tham as generic class in main style sheet for later re-use (e.g. .flex-row, .mb-5, .text-center and so on)
 
-## Riles:
+## Rules, Conventions:
 Use modern angular:
  - @if, @for
  - Standalone components
+Position different domains in own directory (e.g. Services, Models, Componenets, States directory).

@@ -23,6 +23,12 @@
           [class.reader-stage-zoomed]="isZoomed"
           (dblclick)="onStageDoubleClick($event)"
           (wheel)="onStageWheel($event)"
+          (pointerdown)="onStagePointerDown($event)"
+          (pointermove)="onStagePointerMove()"
+          (pointerup)="onStagePointerRelease($event)"
+          (pointercancel)="onStagePointerRelease($event)"
+          (pointerleave)="onStagePointerRelease($event)"
+          (contextmenu)="onStageContextMenu($event)"
         >
           @if (isPdfLoading) {
             <div class="page-loading">
