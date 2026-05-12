@@ -12,33 +12,31 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-  IonBackButton,
-  IonButtons,
   IonCard,
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
   IonContent,
-  IonHeader,
   IonSpinner,
-  IonTitle,
-  IonToolbar,
 } from '@ionic/angular/standalone';
 import { PrayerPreset } from '../models/prayer-preset.model';
 import { PrayerPresetsService } from '../services/prayer-presets.service';
 
 const PDF_ASSET_PATH = '/assets/siddur/tehilat-hashem.pdf';
 const PDF_WORKER_PATH = '/assets/pdfjs/pdf.worker.min.mjs';
-const PAGE_PRELOAD_DISTANCE = 2;
+const PAGE_PRELOAD_DISTANCE = 5;
 const MAX_RENDER_PIXEL_RATIO = 2;
 const MAX_ZOOM_RATIO = 3;
 
 type SwiperZoom = {
   scale?: number;
+  in: (value?: number | Event) => void;
   out: () => void;
+  toggle: (event?: Event) => void;
 };
 
 type SwiperElement = HTMLElement & {
+  initialize: () => void;
   swiper?: {
     activeIndex: number;
     allowTouchMove: boolean;
@@ -89,17 +87,12 @@ type RenderedPage = {
   styleUrls: ['./reader.page.scss'],
   standalone: true,
   imports: [
-    IonBackButton,
-    IonButtons,
     IonCard,
     IonCardContent,
     IonCardHeader,
     IonCardTitle,
     IonContent,
-    IonHeader,
     IonSpinner,
-    IonTitle,
-    IonToolbar,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -118,12 +111,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   isPdfLoading = true;
   isZoomed = false;
   loadErrorMessage = '';
-  readonly zoomOptions = {
-    enabled: true,
-    minRatio: 1,
-    maxRatio: MAX_ZOOM_RATIO,
-    toggle: true,
-  };
+  readonly maxZoomRatio = MAX_ZOOM_RATIO;
 
   private pdfDocument?: PdfDocumentProxy;
   private pdfLoadingTask?: {
@@ -136,6 +124,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   private renderRevision = 0;
   private isRecentering = false;
   private prewarmTimeoutId?: number;
+  private pendingPage?: number;
 
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -159,6 +148,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    this.initializeSwiper();
     this.recenterSwiper();
     void this.prepareVisiblePages();
   }
@@ -181,15 +171,28 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const direction = nextIndex > this.activeSlideIndex ? 1 : -1;
-    const nextPage = this.currentPage + direction;
+    const nextPage = this.visiblePages[nextIndex];
+    if (!nextPage) {
+      this.recenterSwiper();
+      return;
+    }
+
     if (nextPage < this.preset.startPage || nextPage > this.preset.endPage) {
       this.recenterSwiper();
       return;
     }
 
-    this.currentPage = nextPage;
-    this.syncZoomState(1);
+    this.pendingPage = nextPage;
+  }
+
+  onSwiperSlideChangeTransitionEnd(): void {
+    if (this.pendingPage === undefined) {
+      return;
+    }
+
+    this.currentPage = this.pendingPage;
+    this.pendingPage = undefined;
+    this.resetZoom();
     this.syncVisiblePages();
     this.updateLoadingState();
     this.recenterSwiper();
@@ -201,8 +204,48 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const [, scale] = event.detail as [unknown, number?, unknown?, unknown?];
+    const [scale] = event.detail as [number?, unknown?, unknown?];
     this.syncZoomState(scale ?? 1);
+  }
+
+  onStageDoubleClick(event: MouseEvent): void {
+    event.preventDefault();
+    const swiper = this.getSwiper();
+    if (!swiper) {
+      return;
+    }
+
+    if ((swiper.zoom.scale ?? 1) > 1.01) {
+      this.resetZoom();
+      return;
+    }
+
+    swiper.zoom.in(Math.min(2, this.maxZoomRatio));
+    this.syncZoomState(Math.min(2, this.maxZoomRatio));
+  }
+
+  onStageWheel(event: WheelEvent): void {
+    if (!event.ctrlKey) {
+      return;
+    }
+
+    event.preventDefault();
+    const swiper = this.getSwiper();
+    if (!swiper) {
+      return;
+    }
+
+    const currentScale = swiper.zoom.scale ?? 1;
+    const nextScale = event.deltaY < 0 ? currentScale + 0.25 : currentScale - 0.25;
+    const clampedScale = Math.min(this.maxZoomRatio, Math.max(1, nextScale));
+
+    if (clampedScale <= 1.01) {
+      this.resetZoom();
+      return;
+    }
+
+    swiper.zoom.in(clampedScale);
+    this.syncZoomState(clampedScale);
   }
 
   trackByPage(_index: number, pageNumber: number): number {
@@ -251,6 +294,11 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
       this.isPdfAvailable = true;
       this.loadErrorMessage = '';
       this.refreshView();
+      window.setTimeout(() => {
+        this.initializeSwiper();
+        this.recenterSwiper();
+        void this.prepareVisiblePages();
+      });
       await this.prepareVisiblePages();
     } catch (error) {
       this.isPdfAvailable = false;
@@ -287,15 +335,11 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const pages: number[] = [];
+    const startPage = Math.max(this.preset.startPage, this.currentPage - PAGE_PRELOAD_DISTANCE);
+    const endPage = Math.min(this.preset.endPage, this.currentPage + PAGE_PRELOAD_DISTANCE);
 
-    if (this.currentPage > this.preset.startPage) {
-      pages.push(this.currentPage - 1);
-    }
-
-    pages.push(this.currentPage);
-
-    if (this.currentPage < this.preset.endPage) {
-      pages.push(this.currentPage + 1);
+    for (let pageNumber = startPage; pageNumber <= endPage; pageNumber += 1) {
+      pages.push(pageNumber);
     }
 
     this.visiblePages = pages;
@@ -370,8 +414,8 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
       }
 
       const extraPages = [
-        this.currentPage - PAGE_PRELOAD_DISTANCE,
-        this.currentPage + PAGE_PRELOAD_DISTANCE,
+        this.currentPage - PAGE_PRELOAD_DISTANCE - 1,
+        this.currentPage + PAGE_PRELOAD_DISTANCE + 1,
       ].filter(
         (pageNumber) =>
           pageNumber >= this.preset!.startPage && pageNumber <= this.preset!.endPage,
@@ -398,13 +442,10 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     try {
       const page = await this.pdfDocument.getPage(pageNumber);
       const baseViewport = page.getViewport({ scale: 1 });
-      const fitScale = Math.min(
-        stageSize.width / baseViewport.width,
-        stageSize.height / baseViewport.height,
-      );
+      const fitScale = stageSize.width / baseViewport.width;
       const pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_RENDER_PIXEL_RATIO);
       const renderViewport = page.getViewport({ scale: fitScale * pixelRatio });
-      const displayWidth = Math.round(baseViewport.width * fitScale);
+      const displayWidth = Math.round(stageSize.width);
       const displayHeight = Math.round(baseViewport.height * fitScale);
 
       const canvas = document.createElement('canvas');
@@ -497,6 +538,29 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     return this.swiperRef?.nativeElement.swiper;
   }
 
+  private initializeSwiper(): void {
+    const swiperElement = this.swiperRef?.nativeElement;
+    if (!swiperElement || swiperElement.swiper) {
+      return;
+    }
+
+    Object.assign(swiperElement, {
+      init: false,
+      initialSlide: this.activeSlideIndex,
+      speed: 250,
+      passiveListeners: false,
+      touchStartPreventDefault: false,
+      zoom: {
+        enabled: true,
+        minRatio: 1,
+        maxRatio: this.maxZoomRatio,
+        toggle: true,
+      },
+    });
+
+    swiperElement.initialize();
+  }
+
   private resetZoom(): void {
     const swiper = this.getSwiper();
     swiper?.zoom.out();
@@ -507,7 +571,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     this.isZoomed = scale > 1.01;
     const swiper = this.getSwiper();
     if (swiper) {
-      swiper.allowTouchMove = true;
+      swiper.allowTouchMove = !this.isZoomed;
     }
     this.refreshView();
   }

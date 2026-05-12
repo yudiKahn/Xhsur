@@ -1,12 +1,3 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home" text=""></ion-back-button>
-    </ion-buttons>
-    <ion-title>{{ preset?.titleHe }}</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true" class="reader-content">
   @if (preset) {
     <div class="reader-layout">
@@ -26,7 +17,13 @@
       }
 
       @if (isPdfAvailable && !loadErrorMessage) {
-        <section #stageRef class="reader-stage" [class.reader-stage-zoomed]="isZoomed">
+        <section
+          #stageRef
+          class="reader-stage"
+          [class.reader-stage-zoomed]="isZoomed"
+          (dblclick)="onStageDoubleClick($event)"
+          (wheel)="onStageWheel($event)"
+        >
           @if (isPdfLoading) {
             <div class="page-loading">
               <ion-spinner name="crescent"></ion-spinner>
@@ -36,9 +33,9 @@
           <swiper-container
             #swiperRef
             class="reader-swiper"
-            [attr.initial-slide]="activeSlideIndex"
-            [zoom]="zoomOptions"
+            init="false"
             (swiperslidechange)="onSwiperSlideChange()"
+            (swiperslidechangetransitionend)="onSwiperSlideChangeTransitionEnd()"
             (zoomchange)="onZoomChange($event)"
           >
             @for (pageNumber of visiblePages; track trackByPage($index, pageNumber)) {
