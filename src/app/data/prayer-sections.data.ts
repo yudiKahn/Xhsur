@@ -17,7 +17,7 @@ export const PRAYER_SECTIONS: PrayerSectionDefinition[] = [
     segments: [
       {
         startPage: 19,
-        endPage: 26,
+        endPage: 22,
       },
     ],
   },
