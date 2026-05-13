@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 
-const PDF_ASSET_PATH = '/assets/siddur/tehilat-hashem.pdf';
-const PDF_WORKER_PATH = '/assets/pdfjs/pdf.worker.min.mjs';
+const PDF_ASSET_PATH = 'assets/siddur/tehilat-hashem.pdf';
+const PDF_WORKER_PATH = 'assets/pdfjs/pdf.worker.min.mjs';
+
+const resolveAssetUrl = (path: string): string =>
+  new URL(path, document.baseURI).toString();
 
 type PdfJsModule = {
   GlobalWorkerOptions: {
@@ -44,14 +47,14 @@ export class SiddurPdfService {
   }
 
   private async loadDocument(): Promise<PdfDocumentProxy> {
-    const response = await fetch(PDF_ASSET_PATH);
+    const response = await fetch(resolveAssetUrl(PDF_ASSET_PATH));
     if (!response.ok) {
       throw new Error(`Failed to load PDF (${response.status}).`);
     }
 
     const pdfData = new Uint8Array(await response.arrayBuffer());
     const pdfJs = await this.getPdfJsModule();
-    pdfJs.GlobalWorkerOptions.workerSrc = PDF_WORKER_PATH;
+    pdfJs.GlobalWorkerOptions.workerSrc = resolveAssetUrl(PDF_WORKER_PATH);
 
     return pdfJs.getDocument({
       data: pdfData,
