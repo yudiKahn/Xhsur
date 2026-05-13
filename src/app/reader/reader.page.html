@@ -1,22 +1,28 @@
 <ion-content [fullscreen]="true" class="reader-content">
   @if (preset) {
     <div class="reader-layout">
-      @if (!isPdfAvailable || loadErrorMessage) {
+      @if (!isPdfAvailable || loadErrorKey) {
         <ion-card color="warning">
           <ion-card-header>
-            <ion-card-title>{{ loadErrorMessage ? 'שגיאה בטעינת ה-PDF' : 'חסר קובץ PDF' }}</ion-card-title>
+            <ion-card-title>
+              {{
+                loadErrorKey
+                  ? ('reader.alertTitle.loadError' | translate)
+                  : ('reader.alertTitle.missingPdf' | translate)
+              }}
+            </ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            @if (loadErrorMessage) {
-              {{ loadErrorMessage }}
+            @if (loadErrorKey) {
+              {{ loadErrorKey | translate : loadErrorParams }}
             } @else {
-              קובץ הסידור עדיין לא זמין באפליקציה.
+              {{ 'reader.missingPdf.body' | translate }}
             }
           </ion-card-content>
         </ion-card>
       }
 
-      @if (isPdfAvailable && !loadErrorMessage) {
+      @if (isPdfAvailable && !loadErrorKey) {
         <section
           #stageRef
           class="reader-stage"

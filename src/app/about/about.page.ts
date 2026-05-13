@@ -14,6 +14,7 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/angular/standalone';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-about',
@@ -34,6 +35,7 @@ import {
     IonList,
     IonTitle,
     IonToolbar,
+    TranslatePipe,
   ],
 })
 export class AboutPage {}

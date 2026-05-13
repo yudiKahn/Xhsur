@@ -34,6 +34,15 @@ export type PdfPageProxy = {
   cleanup?: () => void;
 };
 
+export class PdfLoadError extends Error {
+  constructor(
+    readonly translationKey: string,
+    readonly interpolationParams: Record<string, unknown> = {},
+  ) {
+    super(translationKey);
+  }
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -49,7 +58,9 @@ export class SiddurPdfService {
   private async loadDocument(): Promise<PdfDocumentProxy> {
     const response = await fetch(resolveAssetUrl(PDF_ASSET_PATH));
     if (!response.ok) {
-      throw new Error(`Failed to load PDF (${response.status}).`);
+      throw new PdfLoadError('reader.errors.pdfLoadFailedWithStatus', {
+        status: response.status,
+      });
     }
 
     const pdfData = new Uint8Array(await response.arrayBuffer());

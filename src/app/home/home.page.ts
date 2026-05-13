@@ -14,6 +14,7 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/angular/standalone';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { PrayerPreset, PrayerSubPreset } from '../models/prayer-preset.model';
 import { PrayerPresetsService } from '../services/prayer-presets.service';
 
@@ -34,6 +35,7 @@ import { PrayerPresetsService } from '../services/prayer-presets.service';
     IonTitle,
     IonToolbar,
     RouterLink,
+    TranslatePipe,
   ],
 })
 export class HomePage implements OnInit {
@@ -41,6 +43,7 @@ export class HomePage implements OnInit {
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly prayerPresetsService = inject(PrayerPresetsService);
   private readonly router = inject(Router);
+  private readonly translateService = inject(TranslateService);
 
   ngOnInit(): void {
     this.presets = this.prayerPresetsService.getAll();
@@ -74,11 +77,11 @@ export class HomePage implements OnInit {
     }
 
     const actionSheet = await this.actionSheetController.create({
-      header: preset.titleHe,
+      header: this.translateService.instant(preset.titleKey),
       buttons: [
         ...subPresets.map((subPreset) => this.toActionSheetButton(preset, subPreset)),
         {
-          text: 'ביטול',
+          text: this.translateService.instant('common.actions.cancel'),
           role: 'cancel',
         },
       ],
@@ -92,7 +95,7 @@ export class HomePage implements OnInit {
     subPreset: PrayerSubPreset,
   ): ActionSheetButton {
     return {
-      text: subPreset.titleHe,
+      text: this.translateService.instant(subPreset.titleKey),
       handler: () => {
         this.navigateToPreset(preset, subPreset.startPage);
       },

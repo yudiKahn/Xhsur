@@ -1,0 +1,66 @@
+{
+  "app": {
+    "title": "Tehilat Hashem Siddur",
+    "meta": {
+      "applicationName": "Siddur",
+      "appleMobileWebAppTitle": "Siddur"
+    }
+  },
+  "common": {
+    "actions": {
+      "cancel": "Cancel"
+    }
+  },
+  "about": {
+    "title": "About",
+    "projectStatus": {
+      "title": "Project status",
+      "body": "This is an MVP scaffold for an Android and iOS Siddur app, with a prayer list and a minimal reading screen."
+    },
+    "plannedExtensions": {
+      "title": "Planned extensions",
+      "body": "Table-of-contents navigation, search, and date-based prayer suggestions."
+    }
+  },
+  "reader": {
+    "alertTitle": {
+      "loadError": "PDF loading error",
+      "missingPdf": "PDF file missing"
+    },
+    "missingPdf": {
+      "body": "The Siddur PDF is not yet available in the app."
+    },
+    "errors": {
+      "pdfLoadFailed": "Failed to load the PDF file.",
+      "pdfLoadFailedWithStatus": "Failed to load the PDF file. Status code: {{status}}.",
+      "canvasUnavailable": "Page rendering is not available on this device.",
+      "pdfRenderFailed": "Failed to render the PDF."
+    }
+  },
+  "presets": {
+    "shacharit": {
+      "title": "Shacharit",
+      "sections": {
+        "birkotHashachar": "Birkot Hashachar",
+        "korbanot": "Korbanot",
+        "hodu": "Hodu",
+        "yishtabach": "Yishtabach"
+      }
+    },
+    "mincha": {
+      "title": "Mincha"
+    },
+    "birkatHamazon": {
+      "title": "Birkat Hamazon"
+    },
+    "tefilatHaderech": {
+      "title": "Tefilat Haderech"
+    },
+    "maariv": {
+      "title": "Maariv"
+    },
+    "kriatShemaAlHamita": {
+      "title": "Kriat Shema Al Hamita"
+    }
+  }
+}

@@ -21,9 +21,11 @@ import {
   IonContent,
   IonSpinner,
 } from '@ionic/angular/standalone';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { PrayerPreset, PrayerSubPreset } from '../models/prayer-preset.model';
 import { PrayerPresetsService } from '../services/prayer-presets.service';
 import {
+  PdfLoadError,
   PdfDocumentProxy,
   PdfPageProxy,
   SiddurPdfService,
@@ -71,6 +73,7 @@ type RenderedPage = {
     IonCardTitle,
     IonContent,
     IonSpinner,
+    TranslatePipe,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -88,7 +91,8 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   isPdfAvailable = false;
   isPdfLoading = true;
   isZoomed = false;
-  loadErrorMessage = '';
+  loadErrorKey = '';
+  loadErrorParams: Record<string, unknown> = {};
   readonly maxZoomRatio = MAX_ZOOM_RATIO;
 
   private pdfDocument?: PdfDocumentProxy;
@@ -107,6 +111,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly prayerPresetsService = inject(PrayerPresetsService);
   private readonly siddurPdfService = inject(SiddurPdfService);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly translateService = inject(TranslateService);
 
   async ngOnInit(): Promise<void> {
     const presetId = this.activatedRoute.snapshot.paramMap.get('presetId');
@@ -290,12 +295,14 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
 
   private async loadPdfDocument(): Promise<void> {
     this.isPdfLoading = true;
-    this.loadErrorMessage = '';
+    this.loadErrorKey = '';
+    this.loadErrorParams = {};
 
     try {
       this.pdfDocument = await this.siddurPdfService.getDocument();
       this.isPdfAvailable = true;
-      this.loadErrorMessage = '';
+      this.loadErrorKey = '';
+      this.loadErrorParams = {};
       this.refreshView();
 
       await this.waitForStageReady();
@@ -314,8 +321,10 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       this.isPdfAvailable = false;
       this.isPdfLoading = false;
-      this.loadErrorMessage =
-        error instanceof Error ? error.message : 'Failed to load PDF.';
+      this.loadErrorKey =
+        error instanceof PdfLoadError ? error.translationKey : 'reader.errors.pdfLoadFailed';
+      this.loadErrorParams =
+        error instanceof PdfLoadError ? error.interpolationParams : {};
       this.refreshView();
     }
   }
@@ -457,7 +466,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
 
       const context = canvas.getContext('2d');
       if (!context) {
-        throw new Error('Canvas rendering is not available.');
+        throw new PdfLoadError('reader.errors.canvasUnavailable');
       }
 
       context.fillStyle = '#ffffff';
@@ -484,7 +493,8 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
 
       if (pageNumber === this.currentPage) {
         this.isPdfLoading = false;
-        this.loadErrorMessage = '';
+        this.loadErrorKey = '';
+        this.loadErrorParams = {};
       }
 
       this.refreshView();
@@ -492,8 +502,10 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
       page.cleanup?.();
     } catch (error) {
       if (pageNumber === this.currentPage) {
-        this.loadErrorMessage =
-          error instanceof Error ? error.message : 'Failed to render page.';
+        this.loadErrorKey =
+          error instanceof PdfLoadError ? error.translationKey : 'reader.errors.pdfRenderFailed';
+        this.loadErrorParams =
+          error instanceof PdfLoadError ? error.interpolationParams : {};
         this.isPdfLoading = false;
         this.refreshView();
       }
@@ -626,11 +638,11 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     this.clearLongPressTimeout();
 
     const actionSheet = await this.actionSheetController.create({
-      header: preset.titleHe,
+      header: this.translateService.instant(preset.titleKey),
       buttons: [
         ...subPresets.map((subPreset) => this.toActionSheetButton(subPreset)),
         {
-          text: 'ביטול',
+          text: this.translateService.instant('common.actions.cancel'),
           role: 'cancel',
         },
       ],
@@ -641,7 +653,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
 
   private toActionSheetButton(subPreset: PrayerSubPreset): ActionSheetButton {
     return {
-      text: subPreset.titleHe,
+      text: this.translateService.instant(subPreset.titleKey),
       handler: () => {
         void this.jumpToPage(subPreset.startPage);
       },

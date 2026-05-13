@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" text=""></ion-back-button>
     </ion-buttons>
-    <ion-title>אודות</ion-title>
+    <ion-title>{{ 'about.title' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -11,18 +11,18 @@
   <div class="about-layout">
     <ion-card>
       <ion-card-header>
-        <ion-card-title>מצב הפרויקט</ion-card-title>
+        <ion-card-title>{{ 'about.projectStatus.title' | translate }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
-        זהו שלד MVP לאפליקציית סידור לאנדרואיד ו-iOS, עם רשימת תפילות ומסך קריאה מינימלי.
+        {{ 'about.projectStatus.body' | translate }}
       </ion-card-content>
     </ion-card>
 
     <ion-list inset="true">
       <ion-item>
         <ion-label>
-          <h3>הרחבות מתוכננות</h3>
-          <p>ניווט לפי תוכן עניינים, חיפוש, והצעות תפילה לפי תאריך.</p>
+          <h3>{{ 'about.plannedExtensions.title' | translate }}</h3>
+          <p>{{ 'about.plannedExtensions.body' | translate }}</p>
         </ion-label>
       </ion-item>
     </ion-list>

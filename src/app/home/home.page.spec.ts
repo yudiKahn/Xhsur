@@ -5,8 +5,58 @@ import {
   ActionSheetController,
   ActionSheetOptions,
 } from '@ionic/angular/standalone';
+import {
+  TranslateLoader,
+  TranslateModule,
+  TranslateService,
+  TranslationObject,
+} from '@ngx-translate/core';
+import { Observable, firstValueFrom, of } from 'rxjs';
 
 import { HomePage } from './home.page';
+
+const TEST_TRANSLATIONS = {
+  app: {
+    title: 'Test Siddur',
+  },
+  common: {
+    actions: {
+      cancel: 'Cancel',
+    },
+  },
+  presets: {
+    shacharit: {
+      title: 'Shacharit',
+      sections: {
+        birkotHashachar: 'Birkot Hashachar',
+        korbanot: 'Korbanot',
+        hodu: 'Hodu',
+        yishtabach: 'Yishtabach',
+      },
+    },
+    mincha: {
+      title: 'Mincha',
+    },
+    birkatHamazon: {
+      title: 'Birkat Hamazon',
+    },
+    tefilatHaderech: {
+      title: 'Tefilat Haderech',
+    },
+    maariv: {
+      title: 'Maariv',
+    },
+    kriatShemaAlHamita: {
+      title: 'Kriat Shema Al Hamita',
+    },
+  },
+};
+
+class TestTranslateLoader implements TranslateLoader {
+  getTranslation(_lang: string): Observable<TranslationObject> {
+    return of(TEST_TRANSLATIONS);
+  }
+}
 
 describe('HomePage', () => {
   let component: HomePage;
@@ -15,6 +65,7 @@ describe('HomePage', () => {
   let actionSheetController: jasmine.SpyObj<ActionSheetController>;
   let presentSpy: jasmine.Spy;
   let capturedActionSheetOptions: ActionSheetOptions | undefined;
+  let translateService: TranslateService;
 
   beforeEach(async () => {
     presentSpy = jasmine.createSpy('present').and.resolveTo();
@@ -28,7 +79,15 @@ describe('HomePage', () => {
     });
 
     await TestBed.configureTestingModule({
-      imports: [HomePage],
+      imports: [
+        HomePage,
+        TranslateModule.forRoot({
+          loader: {
+            provide: TranslateLoader,
+            useClass: TestTranslateLoader,
+          },
+        }),
+      ],
       providers: [
         provideRouter([]),
         {
@@ -42,6 +101,8 @@ describe('HomePage', () => {
     }).compileComponents();
 
     router = TestBed.inject(Router);
+    translateService = TestBed.inject(TranslateService);
+    await firstValueFrom(translateService.use('he'));
     spyOn(router, 'navigate').and.resolveTo(true);
 
     fixture = TestBed.createComponent(HomePage);
@@ -107,13 +168,15 @@ describe('HomePage', () => {
     await component.openPreset(shacharit!);
 
     expect(actionSheetController.create).toHaveBeenCalled();
-    expect(capturedActionSheetOptions?.header).toBe('שחרית');
+    expect(capturedActionSheetOptions?.header).toBe(
+      translateService.instant('presets.shacharit.title'),
+    );
     expect(getObjectButtons(capturedActionSheetOptions).map((button) => button.text)).toEqual([
-      'ברכות השחר',
-      'קרבנות',
-      'הודו',
-      'ישתבח',
-      'ביטול',
+      translateService.instant('presets.shacharit.sections.birkotHashachar'),
+      translateService.instant('presets.shacharit.sections.korbanot'),
+      translateService.instant('presets.shacharit.sections.hodu'),
+      translateService.instant('presets.shacharit.sections.yishtabach'),
+      translateService.instant('common.actions.cancel'),
     ]);
     expect(presentSpy).toHaveBeenCalled();
     expect(router.navigate).not.toHaveBeenCalled();
@@ -128,10 +191,22 @@ describe('HomePage', () => {
 
     const buttons = getObjectButtons(capturedActionSheetOptions);
     const sectionExpectations = [
-      { text: 'ברכות השחר', page: 6 },
-      { text: 'קרבנות', page: 18 },
-      { text: 'הודו', page: 27 },
-      { text: 'ישתבח', page: 41 },
+      {
+        text: translateService.instant('presets.shacharit.sections.birkotHashachar'),
+        page: 6,
+      },
+      {
+        text: translateService.instant('presets.shacharit.sections.korbanot'),
+        page: 18,
+      },
+      {
+        text: translateService.instant('presets.shacharit.sections.hodu'),
+        page: 27,
+      },
+      {
+        text: translateService.instant('presets.shacharit.sections.yishtabach'),
+        page: 41,
+      },
     ];
 
     sectionExpectations.forEach(({ text, page }) => {

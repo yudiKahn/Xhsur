@@ -1,0 +1,66 @@
+{
+  "app": {
+    "title": "סידור תהילת השם",
+    "meta": {
+      "applicationName": "סידור",
+      "appleMobileWebAppTitle": "סידור"
+    }
+  },
+  "common": {
+    "actions": {
+      "cancel": "ביטול"
+    }
+  },
+  "about": {
+    "title": "אודות",
+    "projectStatus": {
+      "title": "מצב הפרויקט",
+      "body": "זהו שלד MVP לאפליקציית סידור לאנדרואיד ו-iOS, עם רשימת תפילות ומסך קריאה מינימלי."
+    },
+    "plannedExtensions": {
+      "title": "הרחבות מתוכננות",
+      "body": "ניווט לפי תוכן עניינים, חיפוש, והצעות תפילה לפי תאריך."
+    }
+  },
+  "reader": {
+    "alertTitle": {
+      "loadError": "שגיאה בטעינת ה-PDF",
+      "missingPdf": "חסר קובץ PDF"
+    },
+    "missingPdf": {
+      "body": "קובץ הסידור עדיין לא זמין באפליקציה."
+    },
+    "errors": {
+      "pdfLoadFailed": "טעינת קובץ ה-PDF נכשלה.",
+      "pdfLoadFailedWithStatus": "טעינת קובץ ה-PDF נכשלה. קוד שגיאה: {{status}}.",
+      "canvasUnavailable": "רינדור הדפים אינו זמין במכשיר זה.",
+      "pdfRenderFailed": "רינדור ה-PDF נכשל."
+    }
+  },
+  "presets": {
+    "shacharit": {
+      "title": "שחרית",
+      "sections": {
+        "birkotHashachar": "ברכות השחר",
+        "korbanot": "קרבנות",
+        "hodu": "הודו",
+        "yishtabach": "ישתבח"
+      }
+    },
+    "mincha": {
+      "title": "מנחה"
+    },
+    "birkatHamazon": {
+      "title": "ברכת המזון"
+    },
+    "tefilatHaderech": {
+      "title": "תפילת הדרך"
+    },
+    "maariv": {
+      "title": "ערבית"
+    },
+    "kriatShemaAlHamita": {
+      "title": "קריאת שמע שעל המיטה"
+    }
+  }
+}
