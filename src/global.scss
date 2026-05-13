@@ -105,7 +105,7 @@ ion-loading {
 
 ion-action-sheet {
   --background: var(--app-color-surface);
-  --button-background: #041530;
+  --button-background: var(--app-color-surface);
   --button-background-selected: rgba(var(--app-color-secondary-rgb), 0.16);
   --button-color: var(--app-color-secondary);
   --header-color: var(--app-color-secondary);
@@ -137,17 +137,17 @@ ion-popover {
 }
 
 .action-sheet-button {
-  background: #041530 !important;
+  background: var(--app-color-surface) !important;
 }
 
 .action-sheet-cancel .action-sheet-button,
 .action-sheet-button.action-sheet-cancel {
-  background: #041530 !important;
+  background: var(--app-color-surface) !important;
 }
 
 .action-sheet-title,
 [id^="action-sheet-"][id$="-header"] {
-  background: #041530 !important;
+  background: var(--app-color-surface) !important;
 }
 
 .action-sheet-title,
