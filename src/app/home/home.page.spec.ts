@@ -53,6 +53,17 @@ describe('HomePage', () => {
     expect(component).toBeTruthy();
   });
 
+  it('loads the preset list in display order', () => {
+    expect(component.presets.map((preset) => preset.id)).toEqual([
+      'shacharit',
+      'mincha',
+      'birkat-hamazon',
+      'tefilat-haderech',
+      'maariv',
+      'kriat-shema-al-hamita',
+    ]);
+  });
+
   it('navigates directly for a regular preset', async () => {
     const mincha = component.presets.find((preset) => preset.id === 'mincha');
 
@@ -63,6 +74,28 @@ describe('HomePage', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/reader', 'mincha'], {
       queryParams: { page: 96 },
     });
+    expect(actionSheetController.create).not.toHaveBeenCalled();
+  });
+
+  it('navigates directly for the new regular presets', async () => {
+    const presetExpectations = [
+      { id: 'birkat-hamazon', page: 88 },
+      { id: 'tefilat-haderech', page: 86 },
+      { id: 'kriat-shema-al-hamita', page: 118 },
+    ];
+
+    for (const { id, page } of presetExpectations) {
+      const preset = component.presets.find((entry) => entry.id === id);
+
+      expect(preset).withContext(id).toBeDefined();
+
+      await component.openPreset(preset!);
+
+      expect(router.navigate).toHaveBeenCalledWith(['/reader', id], {
+        queryParams: { page },
+      });
+    }
+
     expect(actionSheetController.create).not.toHaveBeenCalled();
   });
 

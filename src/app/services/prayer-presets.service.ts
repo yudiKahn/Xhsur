@@ -52,12 +52,36 @@ const PRAYER_PRESETS: PrayerPreset[] = [
     order: 2,
   },
   {
+    id: 'birkat-hamazon',
+    titleHe: 'ברכת המזון',
+    titleEn: 'Birkat Hamazon',
+    startPage: 88,
+    endPage: 94,
+    order: 3,
+  },
+  {
+    id: 'tefilat-haderech',
+    titleHe: 'תפילת הדרך',
+    titleEn: 'Tefilat Haderech',
+    startPage: 86,
+    endPage: 86,
+    order: 4,
+  },
+  {
     id: 'maariv',
     titleHe: 'ערבית',
     titleEn: 'Maariv',
     startPage: 106,
     endPage: 118,
-    order: 3,
+    order: 5,
+  },
+  {
+    id: 'kriat-shema-al-hamita',
+    titleHe: 'קריאת שמע שעל המיטה',
+    titleEn: 'Kriat Shema Al Hamita',
+    startPage: 118,
+    endPage: 124,
+    order: 6,
   },
 ];
 
