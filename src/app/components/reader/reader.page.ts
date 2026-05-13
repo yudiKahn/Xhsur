@@ -177,13 +177,7 @@ export class ReaderPage implements OnInit, OnDestroy {
 
     const actionSheet = await this.actionSheetController.create({
       header: this.translateService.instant(preset.titleKey),
-      buttons: [
-        ...sections.map((section) => this.toActionSheetButton(section)),
-        {
-          text: this.translateService.instant('common.actions.cancel'),
-          role: 'cancel',
-        },
-      ],
+      buttons: [...sections.map((section) => this.toActionSheetButton(section))],
     });
 
     await actionSheet.present();

@@ -92,10 +92,6 @@ export class HomePage implements OnInit {
     const actionSheet = await this.actionSheetController.create({
       buttons: [
         ...sections.map((section) => this.toActionSheetButton(preset, section)),
-        {
-          text: this.translateService.instant('common.actions.cancel'),
-          role: 'cancel',
-        },
       ],
     });
 
