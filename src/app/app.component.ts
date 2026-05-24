@@ -3,7 +3,6 @@ import { Meta, Title } from '@angular/platform-browser';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 import { TranslateService } from '@ngx-translate/core';
 import { register } from 'swiper/element/bundle';
-import { SiddurPdfService } from './services/siddur-pdf.service';
 
 @Component({
   selector: 'app-root',
@@ -16,7 +15,6 @@ export class AppComponent {
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
   private readonly translateService = inject(TranslateService);
-  private readonly siddurPdfService = inject(SiddurPdfService);
 
   constructor() {
     register();
@@ -29,6 +27,5 @@ export class AppComponent {
       name: 'apple-mobile-web-app-title',
       content: this.translateService.instant('app.meta.appleMobileWebAppTitle'),
     });
-    this.siddurPdfService.prefetch();
   }
 }

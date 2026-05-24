@@ -1,24 +1,33 @@
 import { Location } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, DestroyRef, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
-  ActionSheetButton,
-  ActionSheetController,
   IonButton,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardTitle,
   IonContent,
+  IonHeader,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonModal,
   IonSpinner,
+  IonTitle,
+  IonToolbar,
 } from '@ionic/angular/standalone';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { combineLatest } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
+import { PrayerBlock } from '../../models/prayer-content.model';
 import { ResolvedPrayerSection } from '../../models/prayer-preset.model';
-import { PdfPageRendererService } from '../../services/pdf-page-renderer.service';
-import { ReaderFacade } from '../../states/reader.facade';
-import { PdfPageCarouselComponent } from '../pdf-page-carousel/pdf-page-carousel.component';
+import { PrayerContentService } from '../../services/prayer-content.service';
+import { PrayerPresetsService } from '../../services/prayer-presets.service';
 
-const LONG_PRESS_DURATION_MS = 500;
+const LONG_PRESS_DURATION_MS = 450;
+
+interface ReaderRenderedSection {
+  id: string;
+  titleKey: string;
+  blocks: PrayerBlock[];
+}
 
 @Component({
   selector: 'app-reader',
@@ -27,130 +36,49 @@ const LONG_PRESS_DURATION_MS = 500;
   standalone: true,
   imports: [
     IonButton,
-    IonCard,
-    IonCardContent,
-    IonCardHeader,
-    IonCardTitle,
     IonContent,
+    IonHeader,
+    IonItem,
+    IonLabel,
+    IonList,
+    IonModal,
     IonSpinner,
-    PdfPageCarouselComponent,
+    IonTitle,
+    IonToolbar,
     TranslatePipe,
   ],
-  providers: [PdfPageRendererService, ReaderFacade],
 })
-export class ReaderPage implements OnInit, OnDestroy {
-  readonly facade = inject(ReaderFacade);
+export class ReaderPage implements OnInit {
+  readonly isLoading = signal(true);
+  readonly isSectionNavigatorOpen = signal(false);
+  readonly loadError = signal<string | null>(null);
+  readonly visibleSections = signal<ResolvedPrayerSection[]>([]);
+  readonly renderedSections = signal<ReaderRenderedSection[]>([]);
 
-  private longPressTimeoutId?: number;
-  private readonly activePointerIds = new Set<number>();
-  private readonly actionSheetController = inject(ActionSheetController);
+  @ViewChild('readerTextBody')
+  private readerTextBody?: ElementRef<HTMLElement>;
+
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly location = inject(Location);
+  private readonly prayerContentService = inject(PrayerContentService);
+  private readonly prayerPresetsService = inject(PrayerPresetsService);
   private readonly router = inject(Router);
-  private readonly translateService = inject(TranslateService);
+  private longPressTimer?: ReturnType<typeof setTimeout>;
+  private longPressTriggered = false;
 
-  async ngOnInit(): Promise<void> {
-    const isReady = await this.facade.initialize();
-    if (!isReady && !this.facade.getPreset()) {
-      void this.router.navigateByUrl('/home', { replaceUrl: true });
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.facade.destroy();
-    this.clearLongPressTimeout();
-  }
-
-  async onViewportReady(size: { width: number; height: number }): Promise<void> {
-    await this.facade.onViewportReady(size);
-  }
-
-  onViewportResize(size: { width: number; height: number }): void {
-    this.facade.onViewportResize(size);
-  }
-
-  onSwiperSlideChange(nextIndex: number): void {
-    this.facade.onSlideIndexChanged(nextIndex);
-  }
-
-  async onSwiperSlideChangeTransitionEnd(carousel: PdfPageCarouselComponent): Promise<void> {
-    carousel.resetZoom();
-    await this.facade.onSlideTransitionEnd();
-  }
-
-  onZoomChange(scale: number): void {
-    this.facade.onZoomScaleChanged(scale);
-  }
-
-  onStageDoubleClick(event: MouseEvent, carousel: PdfPageCarouselComponent): void {
-    event.preventDefault();
-
-    if (carousel.getZoomScale() > 1.01) {
-      carousel.resetZoom();
-      return;
-    }
-
-    carousel.zoomTo(Math.min(2, this.facade.viewModel().maxZoomRatio));
-  }
-
-  onStageWheel(event: WheelEvent, carousel: PdfPageCarouselComponent): void {
-    if (!event.ctrlKey) {
-      return;
-    }
-
-    event.preventDefault();
-
-    const currentScale = carousel.getZoomScale();
-    const nextScale = event.deltaY < 0 ? currentScale + 0.25 : currentScale - 0.25;
-    const clampedScale = Math.min(this.facade.viewModel().maxZoomRatio, Math.max(1, nextScale));
-
-    if (clampedScale <= 1.01) {
-      carousel.resetZoom();
-      return;
-    }
-
-    carousel.zoomTo(clampedScale);
-  }
-
-  onStagePointerDown(event: PointerEvent): void {
-    if (event.pointerType === 'mouse' && event.button !== 0) {
-      return;
-    }
-
-    this.activePointerIds.add(event.pointerId);
-
-    if (
-      !this.facade.canOpenSectionSheet() ||
-      this.facade.viewModel().isZoomed ||
-      this.activePointerIds.size > 1
-    ) {
-      this.clearLongPressTimeout();
-      return;
-    }
-
-    this.clearLongPressTimeout();
-    this.longPressTimeoutId = window.setTimeout(() => {
-      void this.presentSections();
-    }, LONG_PRESS_DURATION_MS);
-  }
-
-  onStagePointerMove(): void {
-    if (this.activePointerIds.size > 1 || this.facade.viewModel().isZoomed) {
-      this.clearLongPressTimeout();
-    }
-  }
-
-  onStagePointerRelease(event: PointerEvent): void {
-    this.activePointerIds.delete(event.pointerId);
-    this.clearLongPressTimeout();
-  }
-
-  onStageContextMenu(event: Event): void {
-    if (!this.facade.canOpenSectionSheet()) {
-      return;
-    }
-
-    event.preventDefault();
-    void this.presentSections();
+  ngOnInit(): void {
+    combineLatest([
+      this.activatedRoute.paramMap,
+      this.activatedRoute.queryParamMap,
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async ([paramMap, queryParamMap]) => {
+        await this.loadReaderContent(
+          paramMap.get('presetId'),
+          queryParamMap.get('section'),
+        );
+      });
   }
 
   goBack(): void {
@@ -162,42 +90,128 @@ export class ReaderPage implements OnInit, OnDestroy {
     void this.router.navigateByUrl('/home', { replaceUrl: true });
   }
 
-  private async presentSections(): Promise<void> {
-    const preset = this.facade.getPreset();
-    if (!preset) {
+  canOpenSectionNavigator(): boolean {
+    return this.visibleSections().length > 1;
+  }
+
+  startLongPress(): void {
+    this.cancelLongPress();
+
+    if (!this.canOpenSectionNavigator()) {
       return;
     }
 
-    const sections = this.facade.getSections();
-    if (!sections.length) {
-      return;
+    this.longPressTriggered = false;
+    this.longPressTimer = setTimeout(() => {
+      this.longPressTriggered = true;
+      this.isSectionNavigatorOpen.set(true);
+    }, LONG_PRESS_DURATION_MS);
+  }
+
+  cancelLongPress(): void {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = undefined;
     }
+  }
 
-    this.clearLongPressTimeout();
+  closeSectionNavigator(): void {
+    this.isSectionNavigatorOpen.set(false);
+  }
 
-    const actionSheet = await this.actionSheetController.create({
-      header: this.translateService.instant(preset.titleKey),
-      buttons: [...sections.map((section) => this.toActionSheetButton(section))],
+  trackBySection(index: number, section: ResolvedPrayerSection): string {
+    return section.id;
+  }
+
+  trackByRenderedSection(index: number, section: ReaderRenderedSection): string {
+    return section.id;
+  }
+
+  trackByBlock(index: number): number {
+    return index;
+  }
+
+  async openSection(section: ResolvedPrayerSection): Promise<void> {
+    this.closeSectionNavigator();
+    this.cancelLongPress();
+
+    await this.router.navigate([], {
+      relativeTo: this.activatedRoute,
+      queryParams: { section: section.id },
+      replaceUrl: true,
     });
-
-    await actionSheet.present();
   }
 
-  private toActionSheetButton(section: ResolvedPrayerSection): ActionSheetButton {
-    return {
-      text: this.translateService.instant(section.titleKey),
-      handler: () => {
-        void this.facade.jumpToSection(section);
-      },
-    };
+  private async loadReaderContent(
+    presetId: string | null,
+    requestedSectionId: string | null,
+  ): Promise<void> {
+    this.isLoading.set(true);
+    this.loadError.set(null);
+
+    try {
+      if (!presetId) {
+        this.loadError.set('Missing preset id.');
+        this.visibleSections.set([]);
+        this.renderedSections.set([]);
+        return;
+      }
+
+      const preset = this.prayerPresetsService.getById(presetId);
+      if (!preset) {
+        this.loadError.set('Preset is not available.');
+        this.visibleSections.set([]);
+        this.renderedSections.set([]);
+        return;
+      }
+
+      const requestedSection = requestedSectionId
+        ? preset.sections.find((section) => section.id === requestedSectionId)
+        : undefined;
+
+      if (requestedSectionId && !requestedSection) {
+        this.loadError.set('Requested section is not available.');
+        this.visibleSections.set([]);
+        this.renderedSections.set([]);
+        return;
+      }
+
+      const sectionsToLoad = preset.sections;
+      this.visibleSections.set(sectionsToLoad);
+
+      const renderedSections = await Promise.all(
+        sectionsToLoad.map(async (section) => {
+          const blocks = await this.prayerContentService.getSectionBlocks(section);
+
+          return {
+            id: section.id,
+            titleKey: section.titleKey,
+            blocks,
+          };
+        }),
+      );
+      this.renderedSections.set(renderedSections.filter((section) => section.blocks.length > 0));
+      this.scrollToSection(requestedSection?.id);
+    } catch {
+      this.loadError.set('Failed to load siddur text content.');
+      this.visibleSections.set([]);
+      this.renderedSections.set([]);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
-  private clearLongPressTimeout(): void {
-    if (this.longPressTimeoutId === undefined) {
+  private scrollToSection(sectionId: string | undefined): void {
+    if (!sectionId) {
       return;
     }
 
-    window.clearTimeout(this.longPressTimeoutId);
-    this.longPressTimeoutId = undefined;
+    queueMicrotask(() => {
+      requestAnimationFrame(() => {
+        const container = this.readerTextBody?.nativeElement;
+        const target = container?.querySelector<HTMLElement>(`[data-section-id="${sectionId}"]`);
+        target?.scrollIntoView({ block: 'start', behavior: 'auto' });
+      });
+    });
   }
 }

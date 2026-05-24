@@ -1,14 +1,16 @@
 .reader-content {
   --background: #ffffff;
-  --reader-stage-height: 100vh;
+  --reader-stage-height: 100%;
 }
 
 .reader-layout {
-  min-height: var(--reader-stage-height);
+  min-height: 100%;
+  position: relative;
+  padding: calc(env(safe-area-inset-top, 0px) + 24px) 5px 24px;
 }
 
 .reader-loading-state {
-  min-height: var(--reader-stage-height);
+  min-height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -20,12 +22,18 @@
   height: 56px;
 }
 
-.reader-stage-shell {
-  position: relative;
+.reader-text-body {
+  margin: 0;
+  line-height: 1.8;
+  font-size: 1.08rem;
+  color: #131313;
+  text-align: right;
 }
 
-.reader-stage-shell app-pdf-page-carousel {
-  display: block;
+.reader-error-text {
+  margin: 48px 0 0;
+  text-align: center;
+  color: #b00020;
 }
 
 .reader-back-button {
@@ -38,8 +46,8 @@
   --padding-end: 0;
   width: 52px;
   height: 52px;
-  position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
   right: 16px;
   z-index: 3;
   margin: 0;
@@ -54,10 +62,4 @@
   font-size: 1.5rem;
   line-height: 1;
   transform: translateY(-1px);
-}
-
-@media (prefers-color-scheme: dark) {
-  .reader-content {
-    --background: #000000;
-  }
 }

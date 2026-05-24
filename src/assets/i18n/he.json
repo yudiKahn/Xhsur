@@ -24,6 +24,9 @@
     }
   },
   "reader": {
+    "sections": {
+      "title": "מקטעים"
+    },
     "alertTitle": {
       "loadError": "שגיאה בטעינת ה-PDF",
       "missingPdf": "חסר קובץ PDF"

@@ -2,14 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { PRAYER_PRESETS } from '../data/prayer-presets.data';
 import { PRAYER_SECTIONS } from '../data/prayer-sections.data';
 import {
+  PrayerHtmlSectionDefinition,
   PrayerConditionRuleId,
-  PrayerPageSegment,
   PrayerPresetDefinition,
   PrayerPresetSummary,
   PrayerPresetSectionRef,
-  PrayerSectionDefinition,
   PrayerTimingFlags,
-  ResolvedPrayerPage,
   ResolvedPrayerPreset,
   ResolvedPrayerSection,
 } from '../models/prayer-preset.model';
@@ -17,16 +15,6 @@ import { PrayerTimingService } from './prayer-timing.service';
 
 const sortSections = (sections: PrayerPresetSectionRef[]): PrayerPresetSectionRef[] =>
   [...sections].sort((left, right) => left.order - right.order);
-
-const expandSegmentPages = (segment: PrayerPageSegment): number[] => {
-  const pages: number[] = [];
-
-  for (let pageNumber = segment.startPage; pageNumber <= segment.endPage; pageNumber += 1) {
-    pages.push(pageNumber);
-  }
-
-  return pages;
-};
 
 @Injectable({
   providedIn: 'root',
@@ -45,7 +33,7 @@ export class PrayerPresetsService {
         id: preset.id,
         titleKey: preset.titleKey,
         order: preset.order,
-        initialPage: preset.initialPage,
+        initialSectionId: preset.initialSectionId,
         sections: preset.sections,
       }));
   }
@@ -65,45 +53,25 @@ export class PrayerPresetsService {
   ): ResolvedPrayerPreset | undefined {
     const resolvedSections = sortSections(presetDefinition.sections)
       .map((sectionRef) => this.resolveSection(sectionRef, flags))
-      .filter((section): section is Omit<ResolvedPrayerSection, 'firstSequenceIndex'> => section !== undefined);
+      .filter((section): section is ResolvedPrayerSection => section !== undefined);
 
     if (!resolvedSections.length) {
       return undefined;
     }
 
-    const pages: ResolvedPrayerPage[] = [];
-    const sections: ResolvedPrayerSection[] = resolvedSections.map((section) => {
-      const firstSequenceIndex = pages.length;
-
-      section.pageNumbers.forEach((pageNumber, pageOffset) => {
-        pages.push({
-          id: `${section.id}-${firstSequenceIndex + pageOffset}-${pageNumber}`,
-          pageNumber,
-          sequenceIndex: firstSequenceIndex + pageOffset,
-          sectionId: section.id,
-        });
-      });
-
-      return {
-        ...section,
-        firstSequenceIndex,
-      };
-    });
-
     return {
       id: presetDefinition.id,
       titleKey: presetDefinition.titleKey,
       order: presetDefinition.order,
-      sections,
-      pages,
-      initialPage: pages[0].pageNumber,
+      sections: resolvedSections,
+      initialSectionId: resolvedSections[0].id,
     };
   }
 
   private resolveSection(
     sectionRef: PrayerPresetSectionRef,
     flags: PrayerTimingFlags,
-  ): Omit<ResolvedPrayerSection, 'firstSequenceIndex'> | undefined {
+  ): ResolvedPrayerSection | undefined {
     if (!this.matchesRule(sectionRef.includeWhen, flags)) {
       return undefined;
     }
@@ -113,15 +81,7 @@ export class PrayerPresetsService {
       throw new Error(`Unknown prayer section: ${sectionRef.sectionId}`);
     }
 
-    const segments = sectionDefinition.segments.filter((segment) =>
-      this.matchesRule(segment.includeWhen, flags),
-    );
-
-    const pageNumbers = segments.reduce<number[]>(
-      (pages, segment) => [...pages, ...expandSegmentPages(segment)],
-      [],
-    );
-    if (!pageNumbers.length) {
+    if (!this.matchesRule(sectionDefinition.includeWhen, flags)) {
       return undefined;
     }
 
@@ -129,9 +89,11 @@ export class PrayerPresetsService {
       id: sectionDefinition.id,
       titleKey: sectionRef.titleKey ?? sectionDefinition.titleKey,
       order: sectionRef.order,
-      segments,
-      pageNumbers,
-      firstPage: pageNumbers[0],
+      assetPath: sectionDefinition.assetPath,
+      sourceFormat: sectionDefinition.sourceFormat ?? 'html',
+      documentSectionId: sectionDefinition.documentSectionId,
+      startHeading: sectionDefinition.startHeading,
+      endHeading: sectionDefinition.endHeading,
     };
   }
 
@@ -157,7 +119,7 @@ export class PrayerPresetsService {
     }
   }
 
-  private getSectionDefinition(sectionId: string): PrayerSectionDefinition | undefined {
+  private getSectionDefinition(sectionId: string): PrayerHtmlSectionDefinition | undefined {
     return PRAYER_SECTIONS.find((section) => section.id === sectionId);
   }
 }

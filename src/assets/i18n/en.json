@@ -24,6 +24,9 @@
     }
   },
   "reader": {
+    "sections": {
+      "title": "Sections"
+    },
     "alertTitle": {
       "loadError": "PDF loading error",
       "missingPdf": "PDF file missing"

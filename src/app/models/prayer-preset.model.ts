@@ -5,22 +5,22 @@ export type PrayerConditionRuleId =
   | 'show-hallel-partial';
 
 export type HallelMode = 'none' | 'partial' | 'full';
+export type PrayerContentSourceFormat = 'html' | 'text';
 
 export interface PrayerTimingFlags {
   tachanun: boolean;
   hallel: HallelMode;
 }
 
-export interface PrayerPageSegment {
-  startPage: number;
-  endPage: number;
-  includeWhen?: PrayerConditionRuleId;
-}
-
-export interface PrayerSectionDefinition {
+export interface PrayerHtmlSectionDefinition {
   id: string;
   titleKey: string;
-  segments: PrayerPageSegment[];
+  assetPath: string;
+  sourceFormat?: PrayerContentSourceFormat;
+  documentSectionId?: string;
+  startHeading?: string;
+  endHeading?: string;
+  includeWhen?: PrayerConditionRuleId;
 }
 
 export interface PrayerPresetSectionRef {
@@ -37,21 +37,15 @@ export interface PrayerPresetDefinition {
   sections: PrayerPresetSectionRef[];
 }
 
-export interface ResolvedPrayerPage {
-  id: string;
-  pageNumber: number;
-  sequenceIndex: number;
-  sectionId: string;
-}
-
 export interface ResolvedPrayerSection {
   id: string;
   titleKey: string;
   order: number;
-  segments: PrayerPageSegment[];
-  pageNumbers: number[];
-  firstPage: number;
-  firstSequenceIndex: number;
+  assetPath: string;
+  sourceFormat: PrayerContentSourceFormat;
+  documentSectionId?: string;
+  startHeading?: string;
+  endHeading?: string;
 }
 
 export interface ResolvedPrayerPreset {
@@ -59,14 +53,13 @@ export interface ResolvedPrayerPreset {
   titleKey: string;
   order: number;
   sections: ResolvedPrayerSection[];
-  pages: ResolvedPrayerPage[];
-  initialPage: number;
+  initialSectionId: string;
 }
 
 export interface PrayerPresetSummary {
   id: string;
   titleKey: string;
   order: number;
-  initialPage: number;
+  initialSectionId: string;
   sections: ResolvedPrayerSection[];
 }

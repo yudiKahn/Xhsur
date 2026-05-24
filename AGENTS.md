@@ -15,3 +15,6 @@ Use modern angular:
  - @if, @for
  - Standalone components
 Position different domains in own directory (e.g. Services, Models, Componenets, States directory).
+
+## Instructions:
+- Do not override manual changes!!! If you see something has changed since last iteration, do not change unless explicitly asked to.
