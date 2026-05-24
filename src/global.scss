@@ -245,3 +245,12 @@ select {
   font-size: 0.4em;
   line-height: 1em;
 }
+
+.siddur-inline-marker {
+  display: inline;
+  font-size: 0.72em;
+  line-height: 1;
+  margin-inline-start: 0.3em;
+  margin-inline-end: 0.24em;
+  vertical-align: baseline;
+}

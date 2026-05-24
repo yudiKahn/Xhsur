@@ -15,11 +15,15 @@
         #readerTextBody
         class="reader-text-body siddur-text-body"
         dir="rtl"
-        (pointerdown)="startLongPress()"
+        (pointerdown)="startLongPress($event)"
         (pointerup)="cancelLongPress()"
         (pointerleave)="cancelLongPress()"
         (pointercancel)="cancelLongPress()"
-        (pointermove)="cancelLongPress()"
+        (pointermove)="handleLongPressMove($event)"
+        (touchstart)="startLongPress($event)"
+        (touchend)="cancelLongPress()"
+        (touchcancel)="cancelLongPress()"
+        (touchmove)="handleLongPressMove($event)"
       >
         @for (section of renderedSections(); track trackByRenderedSection($index, section)) {
           <section class="reader-section-anchor" [attr.data-section-id]="section.id">
@@ -28,27 +32,76 @@
                 @case ('heading') {
                   @switch (block.level) {
                     @case (2) {
-                      <h2>{{ block.text }}</h2>
+                      <h2>
+                        @for (segment of block.segments; track trackBySegment($index)) {
+                          @if (segment.marker) {
+                            <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                          }
+                          {{ segment.text }}
+                        }
+                      </h2>
                     }
                     @case (3) {
-                      <h3>{{ block.text }}</h3>
+                      <h3>
+                        @for (segment of block.segments; track trackBySegment($index)) {
+                          @if (segment.marker) {
+                            <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                          }
+                          {{ segment.text }}
+                        }
+                      </h3>
                     }
                     @case (4) {
-                      <h4>{{ block.text }}</h4>
+                      <h4>
+                        @for (segment of block.segments; track trackBySegment($index)) {
+                          @if (segment.marker) {
+                            <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                          }
+                          {{ segment.text }}
+                        }
+                      </h4>
                     }
                     @case (5) {
-                      <h5>{{ block.text }}</h5>
+                      <h5>
+                        @for (segment of block.segments; track trackBySegment($index)) {
+                          @if (segment.marker) {
+                            <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                          }
+                          {{ segment.text }}
+                        }
+                      </h5>
                     }
                     @default {
-                      <h6>{{ block.text }}</h6>
+                      <h6>
+                        @for (segment of block.segments; track trackBySegment($index)) {
+                          @if (segment.marker) {
+                            <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                          }
+                          {{ segment.text }}
+                        }
+                      </h6>
                     }
                   }
                 }
                 @case ('comment') {
-                  <h6>{{ block.text }}</h6>
+                  <h6>
+                    @for (segment of block.segments; track trackBySegment($index)) {
+                      @if (segment.marker) {
+                        <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                      }
+                      {{ segment.text }}
+                    }
+                  </h6>
                 }
                 @default {
-                  <h1>{{ block.text }}</h1>
+                  <h1>
+                    @for (segment of block.segments; track trackBySegment($index)) {
+                      @if (segment.marker) {
+                        <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                      }
+                      {{ segment.text }}
+                    }
+                  </h1>
                 }
               }
             }

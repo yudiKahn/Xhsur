@@ -7,6 +7,7 @@ import {
 import { PrayerConditionRuleId } from '../models/prayer-preset.model';
 
 const SECTION_HEADING_LEVEL = 2;
+const INLINE_MARKER_PATTERN = /^[א-ת][א-ת״"'׳]{0,3}$/u;
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +20,12 @@ export class PrayerDocumentParserService {
 
     let currentSection: PrayerSectionDocument | undefined;
     const conditionStack: PrayerConditionRuleId[] = [];
+    let pendingInlineMarker:
+      | {
+          text: string;
+          conditions?: PrayerConditionRuleId[];
+        }
+      | undefined;
 
     lines.forEach((rawLine, index) => {
       const lineNumber = index + 1;
@@ -48,6 +55,16 @@ export class PrayerDocumentParserService {
       }
 
       if (line.startsWith('# ')) {
+        if (currentSection && pendingInlineMarker) {
+          currentSection.blocks.push({
+            type: 'comment',
+            text: pendingInlineMarker.text,
+            level: 6,
+            conditions: pendingInlineMarker.conditions,
+          });
+          pendingInlineMarker = undefined;
+        }
+
         const sectionMatch = /^#\s+\[([a-z0-9-]+)\]\s+(.+)$/i.exec(line);
         if (!sectionMatch) {
           throw new Error(`Invalid section heading at line ${lineNumber}.`);
@@ -81,7 +98,7 @@ export class PrayerDocumentParserService {
         }
 
         const [, marker, text] = match;
-        currentSection.blocks.push({
+        this.pushBlock(currentSection, {
           type: 'heading',
           text,
           level: this.toHeadingLevel(marker.length),
@@ -96,24 +113,53 @@ export class PrayerDocumentParserService {
           throw new Error(`Empty comment block at line ${lineNumber}.`);
         }
 
-        currentSection.blocks.push({
+        const conditions = this.cloneConditions(conditionStack);
+        if (this.isInlineMarker(text)) {
+          if (pendingInlineMarker) {
+            currentSection.blocks.push({
+              type: 'comment',
+              text: pendingInlineMarker.text,
+              level: 6,
+              conditions: pendingInlineMarker.conditions,
+            });
+          }
+
+          pendingInlineMarker = {
+            text,
+            conditions,
+          };
+          return;
+        }
+
+        this.pushBlock(currentSection, {
           type: 'comment',
           text,
           level: 6,
-          conditions: this.cloneConditions(conditionStack),
-        });
+          conditions,
+        }, pendingInlineMarker);
+        pendingInlineMarker = undefined;
         return;
       }
 
-      currentSection.blocks.push({
+      this.pushBlock(currentSection, {
         type: 'paragraph',
         text: line,
         conditions: this.cloneConditions(conditionStack),
-      });
+      }, pendingInlineMarker);
+      pendingInlineMarker = undefined;
     });
 
     if (conditionStack.length) {
       throw new Error('Unclosed @if block in prayer source.');
+    }
+
+    if (currentSection && pendingInlineMarker) {
+      currentSection.blocks.push({
+        type: 'comment',
+        text: pendingInlineMarker.text,
+        level: 6,
+        conditions: pendingInlineMarker.conditions,
+      });
     }
 
     return {
@@ -124,6 +170,56 @@ export class PrayerDocumentParserService {
 
   private toHeadingLevel(markerCount: number): 3 | 4 | 5 | 6 {
     return Math.min(markerCount + 1, 6) as 3 | 4 | 5 | 6;
+  }
+
+  private isInlineMarker(value: string): boolean {
+    return INLINE_MARKER_PATTERN.test(value);
+  }
+
+  private pushBlock(
+    section: PrayerSectionDocument,
+    block: PrayerBlock,
+    pendingInlineMarker?: {
+      text: string;
+      conditions?: PrayerConditionRuleId[];
+    },
+  ): void {
+    if (
+      pendingInlineMarker &&
+      this.conditionsMatch(block.conditions, pendingInlineMarker.conditions)
+    ) {
+      section.blocks.push({
+        ...block,
+        marker: pendingInlineMarker.text,
+      });
+      return;
+    }
+
+    if (pendingInlineMarker) {
+      section.blocks.push({
+        type: 'comment',
+        text: pendingInlineMarker.text,
+        level: 6,
+        conditions: pendingInlineMarker.conditions,
+      });
+    }
+
+    section.blocks.push(block);
+  }
+
+  private conditionsMatch(
+    left: PrayerConditionRuleId[] | undefined,
+    right: PrayerConditionRuleId[] | undefined,
+  ): boolean {
+    if (!left?.length && !right?.length) {
+      return true;
+    }
+
+    if ((left?.length ?? 0) !== (right?.length ?? 0)) {
+      return false;
+    }
+
+    return (left ?? []).every((entry, index) => entry === right?.[index]);
   }
 
   private cloneConditions(conditions: PrayerConditionRuleId[]): PrayerConditionRuleId[] | undefined {

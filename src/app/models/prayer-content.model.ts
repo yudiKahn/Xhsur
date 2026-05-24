@@ -5,6 +5,7 @@ export type PrayerBlockType = 'heading' | 'comment' | 'paragraph';
 export interface PrayerBlock {
   type: PrayerBlockType;
   text: string;
+  marker?: string;
   level?: 1 | 2 | 3 | 4 | 5 | 6;
   conditions?: PrayerConditionRuleId[];
 }

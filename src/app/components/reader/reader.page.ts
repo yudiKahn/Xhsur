@@ -22,11 +22,23 @@ import { PrayerContentService } from '../../services/prayer-content.service';
 import { PrayerPresetsService } from '../../services/prayer-presets.service';
 
 const LONG_PRESS_DURATION_MS = 450;
+const LONG_PRESS_MOVE_TOLERANCE_PX = 12;
 
 interface ReaderRenderedSection {
   id: string;
   titleKey: string;
-  blocks: PrayerBlock[];
+  blocks: ReaderRenderedBlock[];
+}
+
+interface ReaderRenderedBlock {
+  type: PrayerBlock['type'];
+  level?: PrayerBlock['level'];
+  segments: ReaderRenderedBlockSegment[];
+}
+
+interface ReaderRenderedBlockSegment {
+  marker?: string;
+  text: string;
 }
 
 @Component({
@@ -65,7 +77,8 @@ export class ReaderPage implements OnInit {
   private readonly prayerPresetsService = inject(PrayerPresetsService);
   private readonly router = inject(Router);
   private longPressTimer?: ReturnType<typeof setTimeout>;
-  private longPressTriggered = false;
+  private longPressStartPoint?: { x: number; y: number };
+  private activePressType?: 'pointer' | 'touch';
 
   ngOnInit(): void {
     combineLatest([
@@ -94,18 +107,47 @@ export class ReaderPage implements OnInit {
     return this.visibleSections().length > 1;
   }
 
-  startLongPress(): void {
+  startLongPress(event: PointerEvent | TouchEvent): void {
     this.cancelLongPress();
 
     if (!this.canOpenSectionNavigator()) {
       return;
     }
 
-    this.longPressTriggered = false;
+    const point = this.getEventPoint(event);
+    if (!point) {
+      return;
+    }
+
+    this.activePressType = this.isTouchEvent(event) ? 'touch' : 'pointer';
+    this.longPressStartPoint = point;
     this.longPressTimer = setTimeout(() => {
-      this.longPressTriggered = true;
+      this.cancelLongPress();
       this.isSectionNavigatorOpen.set(true);
     }, LONG_PRESS_DURATION_MS);
+  }
+
+  handleLongPressMove(event: PointerEvent | TouchEvent): void {
+    if (!this.longPressTimer || !this.longPressStartPoint) {
+      return;
+    }
+
+    const eventType = this.isTouchEvent(event) ? 'touch' : 'pointer';
+    if (this.activePressType && this.activePressType !== eventType) {
+      return;
+    }
+
+    const point = this.getEventPoint(event);
+    if (!point) {
+      return;
+    }
+
+    const movedX = Math.abs(point.x - this.longPressStartPoint.x);
+    const movedY = Math.abs(point.y - this.longPressStartPoint.y);
+
+    if (movedX > LONG_PRESS_MOVE_TOLERANCE_PX || movedY > LONG_PRESS_MOVE_TOLERANCE_PX) {
+      this.cancelLongPress();
+    }
   }
 
   cancelLongPress(): void {
@@ -113,6 +155,9 @@ export class ReaderPage implements OnInit {
       clearTimeout(this.longPressTimer);
       this.longPressTimer = undefined;
     }
+
+    this.longPressStartPoint = undefined;
+    this.activePressType = undefined;
   }
 
   closeSectionNavigator(): void {
@@ -128,6 +173,10 @@ export class ReaderPage implements OnInit {
   }
 
   trackByBlock(index: number): number {
+    return index;
+  }
+
+  trackBySegment(index: number): number {
     return index;
   }
 
@@ -186,7 +235,7 @@ export class ReaderPage implements OnInit {
           return {
             id: section.id,
             titleKey: section.titleKey,
-            blocks,
+            blocks: this.toRenderedBlocks(blocks),
           };
         }),
       );
@@ -213,5 +262,61 @@ export class ReaderPage implements OnInit {
         target?.scrollIntoView({ block: 'start', behavior: 'auto' });
       });
     });
+  }
+
+  private getEventPoint(
+    event: PointerEvent | TouchEvent,
+  ): { x: number; y: number } | undefined {
+    if (this.isTouchEvent(event)) {
+      const touch = event.touches[0] ?? event.changedTouches[0];
+      if (!touch) {
+        return undefined;
+      }
+
+      return {
+        x: touch.clientX,
+        y: touch.clientY,
+      };
+    }
+
+    return {
+      x: event.clientX,
+      y: event.clientY,
+    };
+  }
+
+  private isTouchEvent(event: PointerEvent | TouchEvent): event is TouchEvent {
+    return 'touches' in event;
+  }
+
+  private toRenderedBlocks(blocks: PrayerBlock[]): ReaderRenderedBlock[] {
+    return blocks.reduce<ReaderRenderedBlock[]>((result, block) => {
+      const previousBlock = result[result.length - 1];
+      const shouldMergeIntoPreviousParagraph =
+        block.type === 'paragraph' &&
+        !!block.marker &&
+        previousBlock?.type === 'paragraph';
+
+      if (shouldMergeIntoPreviousParagraph) {
+        previousBlock.segments.push({
+          marker: block.marker,
+          text: block.text,
+        });
+        return result;
+      }
+
+      result.push({
+        type: block.type,
+        level: block.level,
+        segments: [
+          {
+            marker: block.marker,
+            text: block.text,
+          },
+        ],
+      });
+
+      return result;
+    }, []);
   }
 }
