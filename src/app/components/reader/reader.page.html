@@ -122,30 +122,3 @@
     </ion-button>
   </div>
 </ion-content>
-
-<ion-modal
-  [isOpen]="isSectionNavigatorOpen()"
-  [breakpoints]="[0, 0.35]"
-  [initialBreakpoint]="0.35"
-  [backdropBreakpoint]="0"
-  [handle]="true"
-  (didDismiss)="closeSectionNavigator()"
->
-  <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ 'reader.sections.title' | translate }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content>
-      <ion-list inset="true">
-        @for (section of visibleSections(); track trackBySection($index, section)) {
-          <ion-item button="true" detail="false" (click)="openSection(section)">
-            <ion-label>{{ section.titleKey | translate }}</ion-label>
-          </ion-item>
-        }
-      </ion-list>
-    </ion-content>
-  </ng-template>
-</ion-modal>

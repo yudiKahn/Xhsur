@@ -3,19 +3,14 @@ import { Component, DestroyRef, ElementRef, OnInit, ViewChild, inject, signal } 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
+  ActionSheetButton,
+  ActionSheetController,
   IonButton,
   IonContent,
-  IonHeader,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonModal,
   IonSpinner,
-  IonTitle,
-  IonToolbar,
 } from '@ionic/angular/standalone';
 import { combineLatest } from 'rxjs';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { PrayerBlock } from '../../models/prayer-content.model';
 import { ResolvedPrayerSection } from '../../models/prayer-preset.model';
 import { PrayerContentService } from '../../services/prayer-content.service';
@@ -49,20 +44,12 @@ interface ReaderRenderedBlockSegment {
   imports: [
     IonButton,
     IonContent,
-    IonHeader,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonModal,
     IonSpinner,
-    IonTitle,
-    IonToolbar,
     TranslatePipe,
   ],
 })
 export class ReaderPage implements OnInit {
   readonly isLoading = signal(true);
-  readonly isSectionNavigatorOpen = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly visibleSections = signal<ResolvedPrayerSection[]>([]);
   readonly renderedSections = signal<ReaderRenderedSection[]>([]);
@@ -72,10 +59,12 @@ export class ReaderPage implements OnInit {
 
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly actionSheetController = inject(ActionSheetController);
   private readonly location = inject(Location);
   private readonly prayerContentService = inject(PrayerContentService);
   private readonly prayerPresetsService = inject(PrayerPresetsService);
   private readonly router = inject(Router);
+  private readonly translateService = inject(TranslateService);
   private longPressTimer?: ReturnType<typeof setTimeout>;
   private longPressStartPoint?: { x: number; y: number };
   private activePressType?: 'pointer' | 'touch';
@@ -123,7 +112,7 @@ export class ReaderPage implements OnInit {
     this.longPressStartPoint = point;
     this.longPressTimer = setTimeout(() => {
       this.cancelLongPress();
-      this.isSectionNavigatorOpen.set(true);
+      void this.presentSectionNavigator();
     }, LONG_PRESS_DURATION_MS);
   }
 
@@ -160,10 +149,6 @@ export class ReaderPage implements OnInit {
     this.activePressType = undefined;
   }
 
-  closeSectionNavigator(): void {
-    this.isSectionNavigatorOpen.set(false);
-  }
-
   trackBySection(index: number, section: ResolvedPrayerSection): string {
     return section.id;
   }
@@ -181,7 +166,6 @@ export class ReaderPage implements OnInit {
   }
 
   async openSection(section: ResolvedPrayerSection): Promise<void> {
-    this.closeSectionNavigator();
     this.cancelLongPress();
 
     await this.router.navigate([], {
@@ -189,6 +173,27 @@ export class ReaderPage implements OnInit {
       queryParams: { section: section.id },
       replaceUrl: true,
     });
+  }
+
+  private async presentSectionNavigator(): Promise<void> {
+    if (!this.canOpenSectionNavigator()) {
+      return;
+    }
+
+    const actionSheet = await this.actionSheetController.create({
+      buttons: this.visibleSections().map((section) => this.toActionSheetButton(section)),
+    });
+
+    await actionSheet.present();
+  }
+
+  private toActionSheetButton(section: ResolvedPrayerSection): ActionSheetButton {
+    return {
+      text: this.translateService.instant(section.titleKey),
+      handler: () => {
+        void this.openSection(section);
+      },
+    };
   }
 
   private async loadReaderContent(
