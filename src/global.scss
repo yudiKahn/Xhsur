@@ -211,7 +211,7 @@ select {
 .siddur-text-body h4,
 .siddur-text-body h5,
 .siddur-text-body h6 {
-  margin: 0 0 0.3rem;
+  margin: 0 0 1rem;
   color: #000;
   font-family: "Yiddishkeit AlefAlefAlef", "Drugulin CLM", "Times New Roman", serif;
   font-weight: 700;
@@ -222,7 +222,8 @@ select {
 }
 
 .siddur-text-body h1 {
-  font-size: 1em;
+  font-size: 1.5em;
+  letter-spacing: 1px;
 }
 
 .siddur-text-body h2 {
