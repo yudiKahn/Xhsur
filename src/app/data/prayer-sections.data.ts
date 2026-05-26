@@ -51,7 +51,9 @@ export const PRAYER_SECTIONS: PrayerHtmlSectionDefinition[] = [
   {
     id: 'maariv-main',
     titleKey: 'presets.maariv.sections.main',
-    assetPath: sectionAsset('maariv-main'),
+    assetPath: prayerSourceAsset('maariv'),
+    sourceFormat: 'text',
+    documentSectionId: 'maariv-main',
   },
   {
     id: 'kriat-shema-al-hamita',

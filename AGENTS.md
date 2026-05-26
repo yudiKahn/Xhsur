@@ -18,3 +18,11 @@ Position different domains in own directory (e.g. Services, Models, Componenets,
 
 ## Instructions:
 - Do not override manual changes! If you see something has changed since last iteration, do not change unless explicitly asked to.
+- Text sources live in `src/assets/siddur/source/*.txt`.
+- Text source syntax:
+  - `# [section-id] Title` starts a document section.
+  - `##` through `#####` are heading levels.
+  - Plain non-empty lines are paragraph blocks.
+  - Lines starting with `>` are notes/comments.
+  - Blank lines are ignored and just separate blocks for readability.
+  - `@if rule` and `@endif` wrap conditional blocks.

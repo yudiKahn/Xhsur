@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { PrayerBlock } from '../models/prayer-content.model';
 
 const READER_FONT_FAMILY = '"Drugulin CLM", "Yiddishkeit AlefAlefAlef", "Times New Roman", serif';
+const PAGE_FIT_SAFETY_PX = 40;
 
 export interface ReaderRenderedSection {
   id: string;
@@ -36,14 +37,6 @@ interface ReaderFlowToken {
   text: string;
 }
 
-interface ReaderBuildingFragment {
-  sectionId: string;
-  block: ReaderRenderedBlock;
-  entry: ReaderTextPageEntry;
-  element: HTMLElement;
-  tokens: ReaderFlowToken[];
-}
-
 @Injectable({
   providedIn: 'root',
 })
@@ -61,59 +54,63 @@ export class ReaderPaginationService {
 
     const pages: ReaderTextPage[] = [];
     let currentEntries: ReaderTextPageEntry[] = [];
-    let currentFragment: ReaderBuildingFragment | undefined;
 
     const measurePage = this.createMeasurePage();
     const measureContent = this.createMeasureContent();
     measurePage.appendChild(measureContent);
     measureHost.appendChild(measurePage);
 
+    const flushCurrentPage = (): void => {
+      if (!currentEntries.length) {
+        return;
+      }
+
+      pages.push(this.finalizeTextPage(currentEntries));
+      currentEntries = [];
+      measureContent.replaceChildren();
+    };
+
     for (const section of renderedSections) {
       for (const block of section.blocks) {
-        const tokens = this.createTokensFromBlock(block);
-        currentFragment = undefined;
+        let remainingTokens = this.createTokensFromBlock(block);
 
-        for (const token of tokens) {
-          if (!currentFragment) {
-            currentFragment = this.createBuildingFragment(section.id, block);
-            measureContent.appendChild(currentFragment.element);
-          }
+        while (remainingTokens.length > 0) {
+          const fittingTokenCount = this.findFittingTokenCount(
+            measureContent,
+            section.id,
+            block,
+            remainingTokens,
+            availableHeight,
+          );
 
-          this.appendToken(currentFragment, token);
+          if (fittingTokenCount <= 0) {
+            if (currentEntries.length > 0) {
+              flushCurrentPage();
+              continue;
+            }
 
-          if (this.getContentHeight(measureContent) <= availableHeight) {
+            const forcedTokens = remainingTokens.slice(0, 1);
+            const forcedEntry = this.createEntryFromTokens(section.id, block, forcedTokens);
+            currentEntries.push(forcedEntry);
+            measureContent.appendChild(this.renderEntry(forcedEntry));
+            remainingTokens = remainingTokens.slice(1);
+
+            if (remainingTokens.length > 0) {
+              flushCurrentPage();
+            }
+
             continue;
           }
 
-          this.removeLastToken(currentFragment);
+          const chunkTokens = remainingTokens.slice(0, fittingTokenCount);
+          const chunkEntry = this.createEntryFromTokens(section.id, block, chunkTokens);
+          currentEntries.push(chunkEntry);
+          measureContent.appendChild(this.renderEntry(chunkEntry));
+          remainingTokens = remainingTokens.slice(fittingTokenCount);
 
-          if (currentFragment.tokens.length > 0) {
-            currentEntries.push(currentFragment.entry);
-            pages.push(this.finalizeTextPage(currentEntries));
-
-            currentEntries = [];
-            measureContent.replaceChildren();
-            currentFragment = this.createBuildingFragment(section.id, block);
-            measureContent.appendChild(currentFragment.element);
-            continue;
+          if (remainingTokens.length > 0) {
+            flushCurrentPage();
           }
-
-          if (currentEntries.length > 0) {
-            pages.push(this.finalizeTextPage(currentEntries));
-            currentEntries = [];
-            measureContent.replaceChildren();
-            currentFragment = this.createBuildingFragment(section.id, block);
-            measureContent.appendChild(currentFragment.element);
-            continue;
-          }
-
-          // A single token is larger than an empty page; keep it to avoid a dead end.
-          this.appendToken(currentFragment, token);
-        }
-
-        if (currentFragment && currentFragment.tokens.length > 0) {
-          currentEntries.push(currentFragment.entry);
-          currentFragment = undefined;
         }
       }
     }
@@ -181,7 +178,7 @@ export class ReaderPaginationService {
     content.dir = 'rtl';
     content.style.height = 'auto';
     content.style.minHeight = '0';
-    content.style.overflow = 'visible';
+    content.style.overflow = 'hidden';
     content.style.width = '100%';
     content.style.boxSizing = 'border-box';
     content.style.padding = '8px 14px';
@@ -191,26 +188,6 @@ export class ReaderPaginationService {
     content.style.textAlign = 'right';
     content.style.fontFamily = READER_FONT_FAMILY;
     return content;
-  }
-
-  private createBuildingFragment(sectionId: string, block: ReaderRenderedBlock): ReaderBuildingFragment {
-    const element = document.createElement(this.getBlockTagName(block)) as HTMLElement;
-    const entry: ReaderTextPageEntry = {
-      sectionId,
-      block: {
-        type: block.type,
-        level: block.level,
-        segments: [],
-      },
-    };
-
-    return {
-      sectionId,
-      block: entry.block,
-      entry,
-      element,
-      tokens: [],
-    };
   }
 
   private createTokensFromBlock(block: ReaderRenderedBlock): ReaderFlowToken[] {
@@ -239,20 +216,14 @@ export class ReaderPaginationService {
     return text.match(/\s+|\S+/g) ?? [];
   }
 
-  private appendToken(fragment: ReaderBuildingFragment, token: ReaderFlowToken): void {
-    fragment.tokens.push(token);
-    this.syncFragment(fragment);
-  }
-
-  private removeLastToken(fragment: ReaderBuildingFragment): void {
-    fragment.tokens.pop();
-    this.syncFragment(fragment);
-  }
-
-  private syncFragment(fragment: ReaderBuildingFragment): void {
+  private createEntryFromTokens(
+    sectionId: string,
+    block: ReaderRenderedBlock,
+    tokens: ReaderFlowToken[],
+  ): ReaderTextPageEntry {
     const segments: ReaderRenderedBlockSegment[] = [];
 
-    for (const token of fragment.tokens) {
+    for (const token of tokens) {
       if (token.kind === 'marker') {
         segments.push({
           marker: token.text,
@@ -272,30 +243,33 @@ export class ReaderPaginationService {
       lastSegment.text += token.text;
     }
 
-    fragment.block.segments = segments;
-    fragment.element.replaceChildren(...this.tokensToNodes(fragment.tokens));
+    return {
+      sectionId,
+      block: {
+        type: block.type,
+        level: block.level,
+        segments,
+      },
+    };
   }
 
-  private tokensToNodes(tokens: ReaderFlowToken[]): Node[] {
-    const nodes: Node[] = [];
+  private renderEntry(entry: ReaderTextPageEntry): HTMLElement {
+    const element = document.createElement(this.getBlockTagName(entry.block));
 
-    for (const token of tokens) {
-      if (token.kind === 'marker') {
+    for (const segment of entry.block.segments) {
+      if (segment.marker) {
         const marker = document.createElement('span');
         marker.className = 'siddur-inline-marker';
-        marker.textContent = token.text;
-        nodes.push(marker);
-        continue;
+        marker.textContent = segment.marker;
+        element.appendChild(marker);
       }
 
-      nodes.push(document.createTextNode(token.text));
+      if (segment.text) {
+        element.appendChild(document.createTextNode(segment.text));
+      }
     }
 
-    return nodes;
-  }
-
-  private getContentHeight(content: HTMLElement): number {
-    return content.getBoundingClientRect().height;
+    return element;
   }
 
   private getBlockTagName(block: ReaderRenderedBlock): string {
@@ -318,5 +292,41 @@ export class ReaderPaginationService {
       default:
         return 'h1';
     }
+  }
+
+  private findFittingTokenCount(
+    measureContent: HTMLElement,
+    sectionId: string,
+    block: ReaderRenderedBlock,
+    remainingTokens: ReaderFlowToken[],
+    availableHeight: number,
+  ): number {
+    if (!remainingTokens.length) {
+      return 0;
+    }
+
+    const effectiveAvailableHeight = Math.max(0, availableHeight - PAGE_FIT_SAFETY_PX);
+    let low = 0;
+    let high = remainingTokens.length;
+    let best = 0;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const candidateEntry = this.createEntryFromTokens(sectionId, block, remainingTokens.slice(0, mid));
+      const candidateElement = this.renderEntry(candidateEntry);
+
+      measureContent.appendChild(candidateElement);
+      const fits = measureContent.getBoundingClientRect().height <= effectiveAvailableHeight;
+      measureContent.removeChild(candidateElement);
+
+      if (fits) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    return best;
   }
 }
