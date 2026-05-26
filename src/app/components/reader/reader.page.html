@@ -10,70 +10,90 @@
       <p class="reader-error-text">{{ loadError() }}</p>
     }
 
-    @if (!isLoading() && !loadError()) {
-      <article
+    @if (!loadError()) {
+      <swiper-container
         #readerTextBody
-        class="reader-text-body siddur-text-body"
+        class="reader-pages"
         dir="rtl"
-        (pointerdown)="startLongPress($event)"
-        (pointerup)="cancelLongPress()"
-        (pointerleave)="cancelLongPress()"
-        (pointercancel)="cancelLongPress()"
-        (pointermove)="handleLongPressMove($event)"
-        (touchstart)="startLongPress($event)"
-        (touchend)="cancelLongPress()"
-        (touchcancel)="cancelLongPress()"
-        (touchmove)="handleLongPressMove($event)"
+        init="false"
+        (swiperslidechange)="onSwiperSlideChange()"
+        (swiperslidechangetransitionend)="onSwiperSlideTransitionEnd()"
       >
-        @for (section of renderedSections(); track trackByRenderedSection($index, section)) {
-          <section class="reader-section-anchor" [attr.data-section-id]="section.id">
-            @for (block of section.blocks; track trackByBlock($index)) {
-              @switch (block.type) {
-                @case ('heading') {
-                  @switch (block.level) {
-                    @case (2) {
-                      <h2>
-                        @for (segment of block.segments; track trackBySegment($index)) {
-                          @if (segment.marker) {
-                            <span class="siddur-inline-marker">{{ segment.marker }}</span>
-                          }
-                          {{ segment.text }}
+        @for (page of visiblePages(); track trackByPage($index, page)) {
+          <swiper-slide>
+            <section class="reader-page">
+              <article
+                class="reader-page-content siddur-text-body"
+                dir="rtl"
+                (pointerdown)="startLongPress($event)"
+                (pointerup)="cancelLongPress()"
+                (pointerleave)="cancelLongPress()"
+                (pointercancel)="cancelLongPress()"
+                (pointermove)="handleLongPressMove($event)"
+                (touchstart)="startLongPress($event)"
+                (touchend)="cancelLongPress()"
+                (touchcancel)="cancelLongPress()"
+                (touchmove)="handleLongPressMove($event)"
+              >
+                @for (entry of page.entries; track trackByPageEntry($index, entry)) {
+                  @switch (entry.block.type) {
+                    @case ('heading') {
+                      @switch (entry.block.level) {
+                        @case (2) {
+                          <h2>
+                            @for (segment of entry.block.segments; track trackBySegment($index)) {
+                              @if (segment.marker) {
+                                <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                              }
+                              {{ segment.text }}
+                            }
+                          </h2>
                         }
-                      </h2>
-                    }
-                    @case (3) {
-                      <h3>
-                        @for (segment of block.segments; track trackBySegment($index)) {
-                          @if (segment.marker) {
-                            <span class="siddur-inline-marker">{{ segment.marker }}</span>
-                          }
-                          {{ segment.text }}
+                        @case (3) {
+                          <h3>
+                            @for (segment of entry.block.segments; track trackBySegment($index)) {
+                              @if (segment.marker) {
+                                <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                              }
+                              {{ segment.text }}
+                            }
+                          </h3>
                         }
-                      </h3>
-                    }
-                    @case (4) {
-                      <h4>
-                        @for (segment of block.segments; track trackBySegment($index)) {
-                          @if (segment.marker) {
-                            <span class="siddur-inline-marker">{{ segment.marker }}</span>
-                          }
-                          {{ segment.text }}
+                        @case (4) {
+                          <h4>
+                            @for (segment of entry.block.segments; track trackBySegment($index)) {
+                              @if (segment.marker) {
+                                <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                              }
+                              {{ segment.text }}
+                            }
+                          </h4>
                         }
-                      </h4>
-                    }
-                    @case (5) {
-                      <h5>
-                        @for (segment of block.segments; track trackBySegment($index)) {
-                          @if (segment.marker) {
-                            <span class="siddur-inline-marker">{{ segment.marker }}</span>
-                          }
-                          {{ segment.text }}
+                        @case (5) {
+                          <h5>
+                            @for (segment of entry.block.segments; track trackBySegment($index)) {
+                              @if (segment.marker) {
+                                <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                              }
+                              {{ segment.text }}
+                            }
+                          </h5>
                         }
-                      </h5>
+                        @default {
+                          <h6>
+                            @for (segment of entry.block.segments; track trackBySegment($index)) {
+                              @if (segment.marker) {
+                                <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                              }
+                              {{ segment.text }}
+                            }
+                          </h6>
+                        }
+                      }
                     }
-                    @default {
+                    @case ('comment') {
                       <h6>
-                        @for (segment of block.segments; track trackBySegment($index)) {
+                        @for (segment of entry.block.segments; track trackBySegment($index)) {
                           @if (segment.marker) {
                             <span class="siddur-inline-marker">{{ segment.marker }}</span>
                           }
@@ -81,33 +101,25 @@
                         }
                       </h6>
                     }
+                    @default {
+                      <h1>
+                        @for (segment of entry.block.segments; track trackBySegment($index)) {
+                          @if (segment.marker) {
+                            <span class="siddur-inline-marker">{{ segment.marker }}</span>
+                          }
+                          {{ segment.text }}
+                        }
+                      </h1>
+                    }
                   }
                 }
-                @case ('comment') {
-                  <h6>
-                    @for (segment of block.segments; track trackBySegment($index)) {
-                      @if (segment.marker) {
-                        <span class="siddur-inline-marker">{{ segment.marker }}</span>
-                      }
-                      {{ segment.text }}
-                    }
-                  </h6>
-                }
-                @default {
-                  <h1>
-                    @for (segment of block.segments; track trackBySegment($index)) {
-                      @if (segment.marker) {
-                        <span class="siddur-inline-marker">{{ segment.marker }}</span>
-                      }
-                      {{ segment.text }}
-                    }
-                  </h1>
-                }
-              }
-            }
-          </section>
+              </article>
+            </section>
+          </swiper-slide>
         }
-      </article>
+      </swiper-container>
+
+      <div #pageMeasureHost class="reader-page-measure-host" aria-hidden="true"></div>
     }
 
     <ion-button
