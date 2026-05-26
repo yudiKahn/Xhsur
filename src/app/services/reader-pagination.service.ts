@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { PrayerBlock } from '../models/prayer-content.model';
 
-const MIN_REMAINING_PAGE_SPACE_RATIO = 0.25;
 const READER_FONT_FAMILY = '"Drugulin CLM", "Yiddishkeit AlefAlefAlef", "Times New Roman", serif';
 
 export interface ReaderRenderedSection {
@@ -32,6 +31,19 @@ export interface ReaderRenderedBlockSegment {
   text: string;
 }
 
+interface ReaderFlowToken {
+  kind: 'marker' | 'text';
+  text: string;
+}
+
+interface ReaderBuildingFragment {
+  sectionId: string;
+  block: ReaderRenderedBlock;
+  entry: ReaderTextPageEntry;
+  element: HTMLElement;
+  tokens: ReaderFlowToken[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -49,6 +61,7 @@ export class ReaderPaginationService {
 
     const pages: ReaderTextPage[] = [];
     let currentEntries: ReaderTextPageEntry[] = [];
+    let currentFragment: ReaderBuildingFragment | undefined;
 
     const measurePage = this.createMeasurePage();
     const measureContent = this.createMeasureContent();
@@ -57,32 +70,51 @@ export class ReaderPaginationService {
 
     for (const section of renderedSections) {
       for (const block of section.blocks) {
-        const entry: ReaderTextPageEntry = {
-          sectionId: section.id,
-          block,
-        };
+        const tokens = this.createTokensFromBlock(block);
+        currentFragment = undefined;
 
-        const heightBeforeAppend = measureContent.getBoundingClientRect().height;
-        const blockElement = this.createBlockElement(block);
-        measureContent.appendChild(blockElement);
+        for (const token of tokens) {
+          if (!currentFragment) {
+            currentFragment = this.createBuildingFragment(section.id, block);
+            measureContent.appendChild(currentFragment.element);
+          }
 
-        const heightAfterAppend = measureContent.getBoundingClientRect().height;
-        const remainingSpaceBeforeAppend = availableHeight - heightBeforeAppend;
-        const shouldBreakBeforeBlock =
-          heightAfterAppend > availableHeight &&
-          currentEntries.length > 0 &&
-          remainingSpaceBeforeAppend < availableHeight * MIN_REMAINING_PAGE_SPACE_RATIO;
+          this.appendToken(currentFragment, token);
 
-        if (shouldBreakBeforeBlock) {
-          measureContent.removeChild(blockElement);
-          pages.push(this.finalizeTextPage(currentEntries));
+          if (this.getContentHeight(measureContent) <= availableHeight) {
+            continue;
+          }
 
-          currentEntries = [entry];
-          measureContent.replaceChildren(blockElement);
-          continue;
+          this.removeLastToken(currentFragment);
+
+          if (currentFragment.tokens.length > 0) {
+            currentEntries.push(currentFragment.entry);
+            pages.push(this.finalizeTextPage(currentEntries));
+
+            currentEntries = [];
+            measureContent.replaceChildren();
+            currentFragment = this.createBuildingFragment(section.id, block);
+            measureContent.appendChild(currentFragment.element);
+            continue;
+          }
+
+          if (currentEntries.length > 0) {
+            pages.push(this.finalizeTextPage(currentEntries));
+            currentEntries = [];
+            measureContent.replaceChildren();
+            currentFragment = this.createBuildingFragment(section.id, block);
+            measureContent.appendChild(currentFragment.element);
+            continue;
+          }
+
+          // A single token is larger than an empty page; keep it to avoid a dead end.
+          this.appendToken(currentFragment, token);
         }
 
-        currentEntries.push(entry);
+        if (currentFragment && currentFragment.tokens.length > 0) {
+          currentEntries.push(currentFragment.entry);
+          currentFragment = undefined;
+        }
       }
     }
 
@@ -152,7 +184,7 @@ export class ReaderPaginationService {
     content.style.overflow = 'visible';
     content.style.width = '100%';
     content.style.boxSizing = 'border-box';
-    content.style.padding = '8px 14px 2em';
+    content.style.padding = '8px 14px';
     content.style.margin = '0';
     content.style.lineHeight = '1.8';
     content.style.fontSize = '1.08rem';
@@ -161,21 +193,109 @@ export class ReaderPaginationService {
     return content;
   }
 
-  private createBlockElement(block: ReaderRenderedBlock): HTMLElement {
+  private createBuildingFragment(sectionId: string, block: ReaderRenderedBlock): ReaderBuildingFragment {
     const element = document.createElement(this.getBlockTagName(block)) as HTMLElement;
+    const entry: ReaderTextPageEntry = {
+      sectionId,
+      block: {
+        type: block.type,
+        level: block.level,
+        segments: [],
+      },
+    };
+
+    return {
+      sectionId,
+      block: entry.block,
+      entry,
+      element,
+      tokens: [],
+    };
+  }
+
+  private createTokensFromBlock(block: ReaderRenderedBlock): ReaderFlowToken[] {
+    const tokens: ReaderFlowToken[] = [];
 
     for (const segment of block.segments) {
       if (segment.marker) {
-        const marker = document.createElement('span');
-        marker.className = 'siddur-inline-marker';
-        marker.textContent = segment.marker;
-        element.appendChild(marker);
+        tokens.push({
+          kind: 'marker',
+          text: segment.marker,
+        });
       }
 
-      element.appendChild(document.createTextNode(segment.text));
+      for (const textToken of this.tokenizeText(segment.text)) {
+        tokens.push({
+          kind: 'text',
+          text: textToken,
+        });
+      }
     }
 
-    return element;
+    return tokens;
+  }
+
+  private tokenizeText(text: string): string[] {
+    return text.match(/\s+|\S+/g) ?? [];
+  }
+
+  private appendToken(fragment: ReaderBuildingFragment, token: ReaderFlowToken): void {
+    fragment.tokens.push(token);
+    this.syncFragment(fragment);
+  }
+
+  private removeLastToken(fragment: ReaderBuildingFragment): void {
+    fragment.tokens.pop();
+    this.syncFragment(fragment);
+  }
+
+  private syncFragment(fragment: ReaderBuildingFragment): void {
+    const segments: ReaderRenderedBlockSegment[] = [];
+
+    for (const token of fragment.tokens) {
+      if (token.kind === 'marker') {
+        segments.push({
+          marker: token.text,
+          text: '',
+        });
+        continue;
+      }
+
+      const lastSegment = segments[segments.length - 1];
+      if (!lastSegment) {
+        segments.push({
+          text: token.text,
+        });
+        continue;
+      }
+
+      lastSegment.text += token.text;
+    }
+
+    fragment.block.segments = segments;
+    fragment.element.replaceChildren(...this.tokensToNodes(fragment.tokens));
+  }
+
+  private tokensToNodes(tokens: ReaderFlowToken[]): Node[] {
+    const nodes: Node[] = [];
+
+    for (const token of tokens) {
+      if (token.kind === 'marker') {
+        const marker = document.createElement('span');
+        marker.className = 'siddur-inline-marker';
+        marker.textContent = token.text;
+        nodes.push(marker);
+        continue;
+      }
+
+      nodes.push(document.createTextNode(token.text));
+    }
+
+    return nodes;
+  }
+
+  private getContentHeight(content: HTMLElement): number {
+    return content.getBoundingClientRect().height;
   }
 
   private getBlockTagName(block: ReaderRenderedBlock): string {

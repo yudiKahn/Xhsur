@@ -50,6 +50,7 @@ ion-content.reader-content::part(scroll) {
   display: flex;
   align-items: stretch;
   justify-content: stretch;
+  background: #ffffff;
 }
 
 .reader-pages swiper-slide {
@@ -57,7 +58,7 @@ ion-content.reader-content::part(scroll) {
 }
 
 .reader-page-content {
-  padding-bottom: 2em;
+  padding: 8px 14px;
   line-height: 1.8;
   font-size: 1.08rem;
   color: #131313;
@@ -66,10 +67,9 @@ ion-content.reader-content::part(scroll) {
   width: 100%;
   height: 100%;
   min-height: var(--reader-stage-height, 100vh);
-  overflow-x: hidden;
-  overflow-y: auto;
-  touch-action: pan-y pinch-zoom;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+  touch-action: none;
+  background: #ffffff;
 }
 
 .reader-page-content.siddur-text-body {
@@ -89,6 +89,7 @@ ion-content.reader-content::part(scroll) {
   height: auto;
   min-height: 0;
   overflow: visible;
+  background: #ffffff;
 }
 
 .reader-error-text {
@@ -110,6 +111,38 @@ ion-content.reader-content::part(scroll) {
 .reader-page--measure {
   width: 100%;
   min-height: var(--reader-stage-height, 100vh);
+}
+
+@media (prefers-color-scheme: dark) {
+  .reader-content {
+    --background: #000000;
+  }
+
+  .reader-layout,
+  .reader-loading-state,
+  .reader-pages,
+  .reader-page,
+  .reader-page-content,
+  .reader-page-content--measure,
+  .reader-page-measure-host,
+  .reader-page--measure {
+    background: #000000;
+  }
+
+  .reader-loading-state {
+    background: rgba(0, 0, 0, 0.85);
+  }
+
+  .reader-page-content,
+  .reader-page-content.siddur-text-body,
+  .reader-page-content.siddur-text-body h1,
+  .reader-page-content.siddur-text-body h2,
+  .reader-page-content.siddur-text-body h3,
+  .reader-page-content.siddur-text-body h4,
+  .reader-page-content.siddur-text-body h5,
+  .reader-page-content.siddur-text-body h6 {
+    color: #ffffff;
+  }
 }
 
 .reader-back-button {
