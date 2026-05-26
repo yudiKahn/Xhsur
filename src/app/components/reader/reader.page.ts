@@ -26,41 +26,19 @@ import { combineLatest } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { PrayerBlock } from '../../models/prayer-content.model';
 import { ResolvedPrayerSection } from '../../models/prayer-preset.model';
+import {
+  ReaderPaginationService,
+  ReaderRenderedBlock,
+  ReaderRenderedSection,
+  ReaderTextPage,
+  ReaderTextPageEntry,
+} from '../../services/reader-pagination.service';
 import { PrayerContentService } from '../../services/prayer-content.service';
 import { PrayerPresetsService } from '../../services/prayer-presets.service';
 
 const LONG_PRESS_DURATION_MS = 450;
 const LONG_PRESS_MOVE_TOLERANCE_PX = 12;
 const PAGE_PRELOAD_DISTANCE = 5;
-const MIN_REMAINING_PAGE_SPACE_RATIO = 0;
-
-interface ReaderRenderedSection {
-  id: string;
-  titleKey: string;
-  blocks: ReaderRenderedBlock[];
-}
-
-interface ReaderTextPage {
-  id: string;
-  sectionIds: string[];
-  entries: ReaderTextPageEntry[];
-}
-
-interface ReaderTextPageEntry {
-  sectionId: string;
-  block: ReaderRenderedBlock;
-}
-
-interface ReaderRenderedBlock {
-  type: PrayerBlock['type'];
-  level?: PrayerBlock['level'];
-  segments: ReaderRenderedBlockSegment[];
-}
-
-interface ReaderRenderedBlockSegment {
-  marker?: string;
-  text: string;
-}
 
 type SwiperInstance = {
   activeIndex: number;
@@ -128,6 +106,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly location = inject(Location);
+  private readonly readerPaginationService = inject(ReaderPaginationService);
   private readonly prayerContentService = inject(PrayerContentService);
   private readonly prayerPresetsService = inject(PrayerPresetsService);
   private readonly router = inject(Router);
@@ -136,7 +115,6 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
   private pendingPageIndex?: number;
   private paginationRebuildFrameId?: number;
   private isRecentering = false;
-  private pageIdCounter = 0;
   private longPressTimer?: ReturnType<typeof setTimeout>;
   private longPressStartPoint?: { x: number; y: number };
   private activePressType?: 'pointer' | 'touch';
@@ -238,20 +216,12 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
     this.schedulePaginationRebuild();
   }
 
-  trackByRenderedSection(index: number, section: ReaderRenderedSection): string {
-    return section.id;
-  }
-
   trackByPage(index: number, page: ReaderTextPage): string {
     return page.id;
   }
 
   trackByPageEntry(index: number, entry: ReaderTextPageEntry): string {
     return `${entry.sectionId}:${entry.block.type}:${entry.block.level ?? 0}:${index}`;
-  }
-
-  trackByBlock(index: number): number {
-    return index;
   }
 
   trackBySegment(index: number): number {
@@ -366,7 +336,7 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const pageIndex = this.getPageIndexForSection(sectionId);
+    const pageIndex = this.readerPaginationService.getPageIndexForSection(this.textPages(), sectionId);
     if (pageIndex === undefined) {
       return;
     }
@@ -394,15 +364,18 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.pageIdCounter = 0;
+    await this.waitForFontsReady();
+
     const availableHeight = pager.clientHeight;
     if (!availableHeight) {
       return;
     }
 
-    const pages = this.buildTextPages(measureHost, availableHeight);
-    const finalPages = pages.length > 0 ? pages : this.buildSectionFallbackPages();
-    const initialPageIndex = this.resolveInitialPageIndex(finalPages);
+    const finalPages = this.readerPaginationService.paginate(this.renderedSections(), measureHost, availableHeight);
+    const initialPageIndex = this.readerPaginationService.resolveInitialPageIndex(
+      finalPages,
+      this.pendingSectionId,
+    );
 
     this.setCurrentPageIndex(initialPageIndex, finalPages.length);
     this.textPages.set(finalPages);
@@ -412,153 +385,6 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
       this.syncSwiperToCurrentPage();
       this.pendingSectionId = undefined;
     });
-  }
-
-  private buildSectionFallbackPages(): ReaderTextPage[] {
-    return this.renderedSections().map((section) => ({
-      id: section.id,
-      sectionIds: [section.id],
-      entries: section.blocks.map((block) => ({
-        sectionId: section.id,
-        block,
-      })),
-    }));
-  }
-
-  private buildTextPages(measureHost: HTMLElement, availableHeight: number): ReaderTextPage[] {
-    measureHost.replaceChildren();
-
-    const pages: ReaderTextPage[] = [];
-    let currentEntries: ReaderTextPageEntry[] = [];
-
-    const measurePage = this.createMeasurePage();
-    const measureContent = this.createMeasureContent();
-    measurePage.appendChild(measureContent);
-    measureHost.appendChild(measurePage);
-
-    for (const section of this.renderedSections()) {
-      for (const block of section.blocks) {
-        const entry: ReaderTextPageEntry = {
-          sectionId: section.id,
-          block,
-        };
-
-        const heightBeforeAppend = measureContent.getBoundingClientRect().height;
-        const blockElement = this.createBlockElement(block);
-        measureContent.appendChild(blockElement);
-
-        const heightAfterAppend = measureContent.getBoundingClientRect().height;
-        const remainingSpaceBeforeAppend = availableHeight - heightBeforeAppend;
-        const shouldBreakBeforeBlock =
-          heightAfterAppend > availableHeight &&
-          currentEntries.length > 0 &&
-          remainingSpaceBeforeAppend < availableHeight * MIN_REMAINING_PAGE_SPACE_RATIO;
-
-        if (shouldBreakBeforeBlock) {
-          measureContent.removeChild(blockElement);
-          pages.push(this.finalizeTextPage(currentEntries));
-
-          currentEntries = [entry];
-          measureContent.replaceChildren(blockElement);
-          continue;
-        }
-
-        currentEntries.push(entry);
-      }
-    }
-
-    if (currentEntries.length > 0) {
-      pages.push(this.finalizeTextPage(currentEntries));
-    }
-
-    return pages;
-  }
-
-  private finalizeTextPage(entries: ReaderTextPageEntry[]): ReaderTextPage {
-    const sectionIds = entries.reduce<string[]>((result, entry) => {
-      if (!result.includes(entry.sectionId)) {
-        result.push(entry.sectionId);
-      }
-
-      return result;
-    }, []);
-
-    return {
-      id: `page-${this.pageIdCounter++}`,
-      sectionIds,
-      entries: [...entries],
-    };
-  }
-
-  private createMeasurePage(): HTMLElement {
-    const page = document.createElement('section');
-    page.className = 'reader-page reader-page--measure';
-    return page;
-  }
-
-  private createMeasureContent(): HTMLElement {
-    const content = document.createElement('article');
-    content.className = 'reader-page-content reader-page-content--measure siddur-text-body';
-    content.dir = 'rtl';
-    return content;
-  }
-
-  private createBlockElement(block: ReaderRenderedBlock): HTMLElement {
-    const element = document.createElement(this.getBlockTagName(block)) as HTMLElement;
-
-    for (const segment of block.segments) {
-      if (segment.marker) {
-        const marker = document.createElement('span');
-        marker.className = 'siddur-inline-marker';
-        marker.textContent = segment.marker;
-        element.appendChild(marker);
-      }
-
-      element.appendChild(document.createTextNode(segment.text));
-    }
-
-    return element;
-  }
-
-  private getBlockTagName(block: ReaderRenderedBlock): string {
-    switch (block.type) {
-      case 'heading':
-        switch (block.level) {
-          case 2:
-            return 'h2';
-          case 3:
-            return 'h3';
-          case 4:
-            return 'h4';
-          case 5:
-            return 'h5';
-          default:
-            return 'h6';
-        }
-      case 'comment':
-        return 'h6';
-      default:
-        return 'h1';
-    }
-  }
-
-  private getPageIndexForSection(sectionId: string): number | undefined {
-    const pageIndex = this.textPages().findIndex((page) => page.sectionIds.includes(sectionId));
-    return pageIndex >= 0 ? pageIndex : undefined;
-  }
-
-  private resolveInitialPageIndex(pages: ReaderTextPage[]): number {
-    if (!pages.length) {
-      return 0;
-    }
-
-    if (!this.pendingSectionId) {
-      return 0;
-    }
-
-    const sectionId = this.pendingSectionId;
-    const requestedPageIndex = pages.findIndex((page) => page.sectionIds.includes(sectionId));
-    return requestedPageIndex >= 0 ? requestedPageIndex : 0;
   }
 
   private initializeSwiper(): void {
@@ -606,6 +432,15 @@ export class ReaderPage implements OnInit, AfterViewInit, OnDestroy {
 
   private getSwiper(): SwiperInstance | undefined {
     return this.readerTextBody?.nativeElement.swiper;
+  }
+
+  private async waitForFontsReady(): Promise<void> {
+    const fontFaces = document.fonts;
+    if (!fontFaces || fontFaces.status === 'loaded') {
+      return;
+    }
+
+    await fontFaces.ready;
   }
 
   onSwiperSlideChange(): void {

@@ -12,7 +12,7 @@ ion-content.reader-content::part(scroll) {
   min-height: var(--reader-stage-height, 100vh);
   position: relative;
   overflow: hidden;
-  padding: calc(env(safe-area-inset-top, 0px) + 24px) 5px 24px;
+  padding: 0 10px;
 }
 
 .reader-loading-state {
@@ -70,6 +70,19 @@ ion-content.reader-content::part(scroll) {
   overflow-y: auto;
   touch-action: pan-y pinch-zoom;
   -webkit-overflow-scrolling: touch;
+}
+
+.reader-page-content.siddur-text-body {
+  font-family: "Drugulin CLM", "Yiddishkeit AlefAlefAlef", "Times New Roman", serif;
+}
+
+.reader-page-content.siddur-text-body h1,
+.reader-page-content.siddur-text-body h2,
+.reader-page-content.siddur-text-body h3,
+.reader-page-content.siddur-text-body h4,
+.reader-page-content.siddur-text-body h5,
+.reader-page-content.siddur-text-body h6 {
+  font-family: "Drugulin CLM", "Yiddishkeit AlefAlefAlef", "Times New Roman", serif;
 }
 
 .reader-page-content--measure {
