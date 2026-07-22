@@ -12,6 +12,10 @@
       "cancel": "Cancel"
     }
   },
+  "home": {
+    "choosePrayer": "Choose a prayer",
+    "additionalPrayers": "Additional prayers"
+  },
   "about": {
     "title": "About",
     "projectStatus": {

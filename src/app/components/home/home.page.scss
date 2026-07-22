@@ -1,37 +1,199 @@
+:host {
+  --home-background: #fbfaf7;
+  --home-navy: #071d45;
+  --home-gold: #b89a60;
+  --home-muted: #8b8a87;
+  display: block;
+  min-height: 100%;
+  color-scheme: light;
+  background: var(--home-background);
+}
+
 .home-content {
-  --background: var(--app-color-primary);
+  --background: var(--home-background);
+  --color: var(--home-navy);
+  --ion-background-color: var(--home-background);
+  background: var(--home-background);
+}
+
+.home-content::part(background),
+.home-content::part(scroll) {
+  background: var(--home-background);
 }
 
 .home-layout {
-  padding: 1rem;
+  box-sizing: border-box;
+  width: min(100%, 680px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: calc(26px + env(safe-area-inset-top, 0px)) 22px calc(34px + env(safe-area-inset-bottom, 0px));
+  position: relative;
+  color: var(--home-navy);
 }
 
-.preset-group + .preset-group {
-  margin-top: 3rem;
+.home-info-button {
+  width: 44px;
+  height: 44px;
+  position: absolute;
+  top: calc(24px + env(safe-area-inset-top, 0px));
+  inset-inline-end: 24px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--home-gold);
+  border-radius: 50%;
+  color: var(--home-gold);
+  text-decoration: none;
 }
 
-.preset-group__title {
-  margin: 0 1rem 0.75rem;
-  font-size: 1.15rem;
-  line-height: 1.4;
+.home-info-button ion-icon {
+  width: 27px;
+  height: 27px;
 }
 
-.preset-list {
-  background: transparent;
+.home-hero {
+  padding: clamp(72px, 12vh, 118px) 12px 34px;
+  text-align: center;
 }
 
-.preset-list ion-item {
-  --border-radius: 18px;
-  border-radius: 18px;
-  overflow: hidden;
+.home-brand-mark {
+  display: block;
+  width: 140px;
+  height: auto;
+  margin: 0 auto 18px;
+  filter: invert(65%) sepia(25%) saturate(735%) hue-rotate(358deg) brightness(91%) contrast(86%);
 }
 
-.preset-list ion-label h2 {
-  font-size: 1.5rem;
-  line-height: 1.35;
+.home-hero h1 {
   margin: 0;
+  color: var(--home-navy);
+  font-size: clamp(2.25rem, 8vw, 3.35rem);
+  font-weight: 700;
+  line-height: 1.12;
 }
 
-.preset-list ion-item + ion-item {
-  margin-top: 0.5rem;
+.home-hero p {
+  margin: 20px 0 0;
+  color: var(--home-muted);
+  font-size: clamp(1.2rem, 4.5vw, 1.55rem);
+}
+
+.home-ornament {
+  display: block;
+  width: 56px;
+  height: 1px;
+  position: relative;
+  margin: 25px auto 0;
+  background: rgba(184, 154, 96, 0.55);
+}
+
+.home-ornament::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: var(--home-gold);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.preset-group {
+  display: grid;
+  gap: 14px;
+}
+
+.prayer-card {
+  width: 100%;
+  min-height: 112px;
+  display: grid;
+  grid-template-columns: 74px 1fr 32px;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 25px;
+  border: 1px solid rgba(7, 29, 69, 0.025);
+  border-radius: 20px;
+  color: var(--home-navy);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 24px rgba(24, 31, 45, 0.08);
+  text-align: start;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.prayer-card:active {
+  transform: scale(0.985);
+  box-shadow: 0 4px 14px rgba(24, 31, 45, 0.1);
+}
+
+.prayer-card:focus-visible,
+.home-info-button:focus-visible {
+  outline: 3px solid rgba(184, 154, 96, 0.5);
+  outline-offset: 3px;
+}
+
+.prayer-card__icon {
+  width: 68px;
+  height: 62px;
+  object-fit: contain;
+  filter: invert(11%) sepia(36%) saturate(2864%) hue-rotate(190deg) brightness(82%) contrast(106%);
+}
+
+.prayer-card__title {
+  color: var(--home-navy);
+  font-size: clamp(1.45rem, 5vw, 1.85rem);
+  line-height: 1.2;
+}
+
+.prayer-card__chevron {
+  color: var(--home-navy);
+  font-family: Arial, sans-serif;
+  font-size: 2.45rem;
+  font-weight: 200;
+  line-height: 1;
+  text-align: end;
+}
+
+.home-section-divider {
+  display: flex;
+  align-items: center;
+  margin: 22px 0;
+}
+
+.home-section-divider::before,
+.home-section-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: rgba(184, 154, 96, 0.22);
+}
+
+.home-section-divider span {
+  width: 8px;
+  height: 8px;
+  margin: 0 11px;
+  background: var(--home-gold);
+  transform: rotate(45deg);
+}
+
+@media (max-width: 420px) {
+  .home-layout {
+    padding-inline: 16px;
+  }
+
+  .home-hero {
+    padding-bottom: 28px;
+  }
+
+  .prayer-card {
+    min-height: 98px;
+    grid-template-columns: 60px 1fr 26px;
+    gap: 13px;
+    padding-inline: 19px;
+  }
+
+  .prayer-card__icon {
+    width: 56px;
+    height: 52px;
+  }
 }

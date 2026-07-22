@@ -172,6 +172,35 @@ ion-popover {
   line-height: 1.35 !important;
 }
 
+ion-action-sheet.home-prayer-sheet {
+  --background: #fbfaf7;
+  --button-background: #fbfaf7;
+  --button-background-selected: rgba(184, 154, 96, 0.16);
+  --button-color: #071d45;
+  --header-color: #071d45;
+  --backdrop-opacity: 0.28;
+}
+
+.home-prayer-sheet .action-sheet-wrapper,
+.home-prayer-sheet .action-sheet-group,
+.home-prayer-sheet .action-sheet-title,
+.home-prayer-sheet [id^="action-sheet-"][id$="-header"] {
+  background: #fbfaf7 !important;
+  color: #071d45 !important;
+}
+
+.home-prayer-sheet .action-sheet-button {
+  background: #fbfaf7 !important;
+  color: #071d45 !important;
+  border-top-color: rgba(184, 154, 96, 0.18) !important;
+}
+
+.home-prayer-sheet .action-sheet-button:hover,
+.home-prayer-sheet .action-sheet-button:focus,
+.home-prayer-sheet .action-sheet-button.ion-activated {
+  background: rgba(184, 154, 96, 0.12) !important;
+}
+
 ion-title,
 ion-label,
 ion-card-title,

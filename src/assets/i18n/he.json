@@ -12,6 +12,10 @@
       "cancel": "ביטול"
     }
   },
+  "home": {
+    "choosePrayer": "בחרו תפילה",
+    "additionalPrayers": "תפילות נוספות"
+  },
   "about": {
     "title": "אודות",
     "projectStatus": {

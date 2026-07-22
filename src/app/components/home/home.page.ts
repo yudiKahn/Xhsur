@@ -5,16 +5,8 @@ import { informationCircleOutline } from 'ionicons/icons';
 import {
   ActionSheetButton,
   ActionSheetController,
-  IonButton,
-  IonButtons,
   IonContent,
-  IonHeader,
   IonIcon,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonTitle,
-  IonToolbar,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PrayerSectionDocument } from '../../models/prayer-content.model';
@@ -24,20 +16,12 @@ import { PrayerPresetsService } from '../../services/prayer-presets.service';
 
 @Component({
   selector: 'app-home',
-  templateUrl: 'home.page.html',
-  styleUrls: ['home.page.scss'],
+  templateUrl: './home.page.html',
+  styleUrls: ['./home.page.scss'],
   standalone: true,
   imports: [
-    IonButton,
-    IonButtons,
     IonContent,
-    IonHeader,
     IonIcon,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonTitle,
-    IonToolbar,
     RouterLink,
     TranslatePipe,
   ],
@@ -89,6 +73,7 @@ export class HomePage implements OnInit {
     }
 
     const actionSheet = await this.actionSheetController.create({
+      cssClass: 'home-prayer-sheet',
       buttons: [
         ...sections.map((section) => this.toActionSheetButton(preset, section)),
       ],
@@ -99,6 +84,21 @@ export class HomePage implements OnInit {
 
   trackByPreset(index: number, preset: PrayerPresetSummary): string {
     return preset.id;
+  }
+
+  getPresetIcon(presetId: string): string {
+    switch (presetId) {
+      case 'shacharit':
+        return 'assets/icons/morning.svg';
+      case 'mincha':
+        return 'assets/icons/noon.svg';
+      case 'tefilat-haderech':
+        return 'assets/icons/road.svg';
+      case 'maariv':
+        return 'assets/icons/morning.svg';
+      default:
+        return 'assets/icons/noon.svg';
+    }
   }
 
   private navigateToPreset(

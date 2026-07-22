@@ -51,6 +51,7 @@ describe('HomePage', () => {
     await component.openPreset(preset);
 
     const buttons = (capturedOptions?.buttons ?? []) as ActionSheetButton[];
+    expect(capturedOptions?.cssClass).toBe('home-prayer-sheet');
     expect(buttons.map((button) => button.text)).toEqual(['ברכות השחר', 'הודו']);
     buttons[1].handler?.();
     expect(router.navigate).toHaveBeenCalledWith(['/reader', 'shacharit'], {

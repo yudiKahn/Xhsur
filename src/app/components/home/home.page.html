@@ -1,52 +1,40 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-button routerLink="/about">
-        <ion-icon slot="icon-only" name="information-circle-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-    <ion-title>{{ 'app.title' | translate }}</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true" class="home-content">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">{{ 'app.title' | translate }}</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <main class="home-layout">
+    <a
+      class="home-info-button"
+      routerLink="/about"
+      [attr.aria-label]="'about.title' | translate"
+    >
+      <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
+    </a>
 
-  <div class="home-layout">
-    <section class="preset-group">
-      <ion-list inset="true" class="preset-list">
-        @for (preset of primaryPresets; track trackByPreset($index, preset)) {
-          <ion-item
-            button="true"
-            detail="true"
-            (click)="openPreset(preset)"
-          >
-            <ion-label>
-              <h2>{{ preset.titleKey | translate }}</h2>
-            </ion-label>
-          </ion-item>
-        }
-      </ion-list>
+    <header class="home-hero">
+      <img class="home-brand-mark" src="assets/icons/siddur.svg" alt="" />
+      <h1>{{ 'app.title' | translate }}</h1>
+      <span class="home-ornament" aria-hidden="true"></span>
+      <p>{{ 'home.choosePrayer' | translate }}</p>
+    </header>
+
+    <section class="preset-group" [attr.aria-label]="'home.choosePrayer' | translate">
+      @for (preset of primaryPresets; track trackByPreset($index, preset)) {
+        <button class="prayer-card" type="button" (click)="openPreset(preset)">
+          <img class="prayer-card__icon" [src]="getPresetIcon(preset.id)" alt="" />
+          <span class="prayer-card__title">{{ preset.titleKey | translate }}</span>
+          <span class="prayer-card__chevron" aria-hidden="true">›</span>
+        </button>
+      }
     </section>
 
-    <section class="preset-group">
-      <ion-list inset="true" class="preset-list">
-        @for (preset of supplementalPresets; track trackByPreset($index, preset)) {
-          <ion-item
-            button="true"
-            detail="true"
-            (click)="openPreset(preset)"
-          >
-            <ion-label>
-              <h2>{{ preset.titleKey | translate }}</h2>
-            </ion-label>
-          </ion-item>
-        }
-      </ion-list>
+    <div class="home-section-divider" aria-hidden="true"><span></span></div>
+
+    <section class="preset-group" [attr.aria-label]="'home.additionalPrayers' | translate">
+      @for (preset of supplementalPresets; track trackByPreset($index, preset)) {
+        <button class="prayer-card" type="button" (click)="openPreset(preset)">
+          <img class="prayer-card__icon" [src]="getPresetIcon(preset.id)" alt="" />
+          <span class="prayer-card__title">{{ preset.titleKey | translate }}</span>
+          <span class="prayer-card__chevron" aria-hidden="true">›</span>
+        </button>
+      }
     </section>
-  </div>
+  </main>
 </ion-content>
