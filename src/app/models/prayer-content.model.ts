@@ -14,9 +14,11 @@ export interface PrayerSectionDocument {
   id: string;
   title: string;
   blocks: PrayerBlock[];
+  conditions?: PrayerConditionRuleId[];
 }
 
 export interface PrayerDocument {
   id: string;
+  title: string;
   sections: PrayerSectionDocument[];
 }

@@ -31,65 +31,55 @@ ion-content.reader-content::part(scroll) {
   height: 56px;
 }
 
-.reader-pages {
-  width: 100%;
+.reader-sections {
   display: block;
+  width: 100%;
   height: var(--reader-stage-height, 100vh);
   min-height: var(--reader-stage-height, 100vh);
-  touch-action: none;
 }
 
-.reader-pages::part(container),
-.reader-pages::part(wrapper) {
+.reader-sections::part(container),
+.reader-sections::part(wrapper),
+.reader-sections swiper-slide {
   height: 100%;
 }
 
-.reader-page {
-  width: 100%;
-  height: var(--reader-stage-height, 100vh);
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-  background: #ffffff;
-}
-
-.reader-pages swiper-slide {
-  height: 100%;
-}
-
-.reader-page-content {
-  padding: 8px 14px;
-  line-height: 1.8;
-  font-size: 1.08rem;
-  color: #131313;
-  text-align: right;
+.reader-section-content {
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-  min-height: var(--reader-stage-height, 100vh);
-  overflow: hidden;
-  touch-action: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  padding: 8px 14px calc(24px + env(safe-area-inset-bottom, 0px));
+  color: #131313;
+  font-size: 1.08rem;
+  line-height: 1.8;
+  text-align: right;
   background: #ffffff;
+  -webkit-overflow-scrolling: touch;
 }
 
-.reader-page-content.siddur-text-body {
+.reader-section-content.siddur-text-body,
+.reader-section-content.siddur-text-body h1,
+.reader-section-content.siddur-text-body h2,
+.reader-section-content.siddur-text-body h3,
+.reader-section-content.siddur-text-body h4,
+.reader-section-content.siddur-text-body h5,
+.reader-section-content.siddur-text-body h6 {
   font-family: "Drugulin CLM", "Yiddishkeit AlefAlefAlef", "Times New Roman", serif;
 }
 
-.reader-page-content.siddur-text-body h1,
-.reader-page-content.siddur-text-body h2,
-.reader-page-content.siddur-text-body h3,
-.reader-page-content.siddur-text-body h4,
-.reader-page-content.siddur-text-body h5,
-.reader-page-content.siddur-text-body h6 {
-  font-family: "Drugulin CLM", "Yiddishkeit AlefAlefAlef", "Times New Roman", serif;
+.reader-section-content p {
+  margin-block: 0.75em;
 }
 
-.reader-page-content--measure {
-  height: auto;
-  min-height: 0;
-  overflow: visible;
-  background: #ffffff;
+.reader-section-content .siddur-note {
+  display: block;
+  margin-block: 0.75em;
+  font-size: 0.88em;
+  line-height: 1.6;
 }
 
 .reader-error-text {
@@ -98,51 +88,18 @@ ion-content.reader-content::part(scroll) {
   color: #b00020;
 }
 
-.reader-page-measure-host {
-  position: absolute;
-  inset: 0;
-  visibility: hidden;
-  pointer-events: none;
-  z-index: -1;
-  overflow: hidden;
-  height: var(--reader-stage-height, 100vh);
-}
-
-.reader-page--measure {
-  width: 100%;
-  min-height: var(--reader-stage-height, 100vh);
-}
-
 @media (prefers-color-scheme: dark) {
-  .reader-content {
-    --background: #000000;
-  }
+  .reader-content { --background: #000000; }
 
   .reader-layout,
   .reader-loading-state,
-  .reader-pages,
-  .reader-page,
-  .reader-page-content,
-  .reader-page-content--measure,
-  .reader-page-measure-host,
-  .reader-page--measure {
+  .reader-sections,
+  .reader-section-content {
     background: #000000;
   }
 
-  .reader-loading-state {
-    background: rgba(0, 0, 0, 0.85);
-  }
-
-  .reader-page-content,
-  .reader-page-content.siddur-text-body,
-  .reader-page-content.siddur-text-body h1,
-  .reader-page-content.siddur-text-body h2,
-  .reader-page-content.siddur-text-body h3,
-  .reader-page-content.siddur-text-body h4,
-  .reader-page-content.siddur-text-body h5,
-  .reader-page-content.siddur-text-body h6 {
-    color: #ffffff;
-  }
+  .reader-loading-state { background: rgba(0, 0, 0, 0.85); }
+  .reader-section-content { color: #ffffff; }
 }
 
 .reader-back-button {

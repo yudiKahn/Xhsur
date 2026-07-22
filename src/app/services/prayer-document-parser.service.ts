@@ -6,137 +6,120 @@ import {
 } from '../models/prayer-content.model';
 import { PrayerConditionRuleId } from '../models/prayer-preset.model';
 
-const SECTION_HEADING_LEVEL = 2;
 const INLINE_MARKER_PATTERN = /^[א-ת][א-ת״"'׳]{0,3}$/u;
 
 @Injectable({
   providedIn: 'root',
 })
 export class PrayerDocumentParserService {
-  parseTextDocument(source: string, documentId: string): PrayerDocument {
+  parseMarkdownDocument(source: string, documentId: string): PrayerDocument {
     const sections: PrayerSectionDocument[] = [];
-    const normalizedSource = source.replace(/\r\n/g, '\n');
-    const lines = normalizedSource.split('\n');
-
-    let currentSection: PrayerSectionDocument | undefined;
+    const sectionIdCounts = new Map<string, number>();
+    const lines = source.replace(/\r\n/g, '\n').split('\n');
     const conditionStack: PrayerConditionRuleId[] = [];
-    let pendingInlineMarker:
-      | {
-          text: string;
-          conditions?: PrayerConditionRuleId[];
-        }
-      | undefined;
+    let documentTitle: string | undefined;
+    let currentSection: PrayerSectionDocument | undefined;
+    let pendingInlineMarker: { text: string; conditions?: PrayerConditionRuleId[] } | undefined;
+
+    const flushPendingMarker = (): void => {
+      if (currentSection && pendingInlineMarker) {
+        currentSection.blocks.push({
+          type: 'comment',
+          text: pendingInlineMarker.text,
+          level: 6,
+          conditions: pendingInlineMarker.conditions,
+        });
+      }
+      pendingInlineMarker = undefined;
+    };
+
+    const flushSection = (keepEmpty = false): void => {
+      flushPendingMarker();
+      if (currentSection && (keepEmpty || currentSection.blocks.length > 1)) {
+        sections.push(currentSection);
+      }
+      currentSection = undefined;
+    };
 
     lines.forEach((rawLine, index) => {
       const lineNumber = index + 1;
       const line = rawLine.trim();
-
-      if (!line) {
-        return;
-      }
+      if (!line) return;
 
       if (line.startsWith('@if ')) {
         const ruleId = line.slice(4).trim() as PrayerConditionRuleId;
-        if (!ruleId) {
-          throw new Error(`Missing condition rule at line ${lineNumber}.`);
-        }
-
+        if (!ruleId) throw new Error(`Missing condition rule at line ${lineNumber}.`);
         conditionStack.push(ruleId);
         return;
       }
-
       if (line === '@endif') {
-        if (!conditionStack.length) {
-          throw new Error(`Unexpected @endif at line ${lineNumber}.`);
-        }
-
+        if (!conditionStack.length) throw new Error(`Unexpected @endif at line ${lineNumber}.`);
         conditionStack.pop();
         return;
       }
 
-      if (line.startsWith('# ')) {
-        if (currentSection && pendingInlineMarker) {
-          currentSection.blocks.push({
-            type: 'comment',
-            text: pendingInlineMarker.text,
-            level: 6,
-            conditions: pendingInlineMarker.conditions,
-          });
-          pendingInlineMarker = undefined;
-        }
-
-        const sectionMatch = /^#\s+\[([a-z0-9-]+)\]\s+(.+)$/i.exec(line);
-        if (!sectionMatch) {
-          throw new Error(`Invalid section heading at line ${lineNumber}.`);
-        }
-
-        const [, sectionId, title] = sectionMatch;
+      const mainHeadingMatch = /^#\s+(.+)$/.exec(line);
+      if (mainHeadingMatch) {
+        if (documentTitle) throw new Error(`Unexpected main heading at line ${lineNumber}.`);
+        documentTitle = mainHeadingMatch[1].trim();
         currentSection = {
-          id: sectionId,
-          title,
-          blocks: [
-            {
-              type: 'heading',
-              text: title,
-              level: SECTION_HEADING_LEVEL,
-              conditions: this.cloneConditions(conditionStack),
-            },
-          ],
+          id: 'main',
+          title: documentTitle,
+          conditions: this.cloneConditions(conditionStack),
+          blocks: [{
+            type: 'heading',
+            text: documentTitle,
+            level: 1,
+            conditions: this.cloneConditions(conditionStack),
+          }],
         };
-        sections.push(currentSection);
         return;
       }
 
-      if (!currentSection) {
-        throw new Error(`Content before first section at line ${lineNumber}.`);
+      if (!documentTitle || !currentSection) {
+        throw new Error(`Content before the prayer title at line ${lineNumber}.`);
       }
 
-      if (line.startsWith('##')) {
-        const match = /^(#{2,5})\s+(.+)$/.exec(line);
-        if (!match) {
-          throw new Error(`Invalid heading marker at line ${lineNumber}.`);
-        }
+      const sectionHeadingMatch = /^##\s+(.+)$/.exec(line);
+      if (sectionHeadingMatch) {
+        flushSection();
+        const title = sectionHeadingMatch[1].trim();
+        currentSection = {
+          id: this.createSectionId(title, sectionIdCounts),
+          title,
+          conditions: this.cloneConditions(conditionStack),
+          blocks: [{
+            type: 'heading',
+            text: title,
+            level: 2,
+            conditions: this.cloneConditions(conditionStack),
+          }],
+        };
+        return;
+      }
 
-        const [, marker, text] = match;
+      const nestedHeadingMatch = /^(#{3,6})\s+(.+)$/.exec(line);
+      if (nestedHeadingMatch) {
         this.pushBlock(currentSection, {
           type: 'heading',
-          text,
-          level: this.toHeadingLevel(marker.length),
+          text: nestedHeadingMatch[2].trim(),
+          level: nestedHeadingMatch[1].length as 3 | 4 | 5 | 6,
           conditions: this.cloneConditions(conditionStack),
-        });
+        }, pendingInlineMarker);
+        pendingInlineMarker = undefined;
         return;
       }
 
       if (line.startsWith('>')) {
         const text = line.slice(1).trim();
-        if (!text) {
-          throw new Error(`Empty comment block at line ${lineNumber}.`);
-        }
-
+        if (!text) throw new Error(`Empty comment block at line ${lineNumber}.`);
         const conditions = this.cloneConditions(conditionStack);
         if (this.isInlineMarker(text)) {
-          if (pendingInlineMarker) {
-            currentSection.blocks.push({
-              type: 'comment',
-              text: pendingInlineMarker.text,
-              level: 6,
-              conditions: pendingInlineMarker.conditions,
-            });
-          }
-
-          pendingInlineMarker = {
-            text,
-            conditions,
-          };
+          flushPendingMarker();
+          pendingInlineMarker = { text, conditions };
           return;
         }
-
-        this.pushBlock(currentSection, {
-          type: 'comment',
-          text,
-          level: 6,
-          conditions,
-        }, pendingInlineMarker);
+        this.pushBlock(currentSection, { type: 'comment', text, level: 6, conditions }, pendingInlineMarker);
         pendingInlineMarker = undefined;
         return;
       }
@@ -149,27 +132,23 @@ export class PrayerDocumentParserService {
       pendingInlineMarker = undefined;
     });
 
-    if (conditionStack.length) {
-      throw new Error('Unclosed @if block in prayer source.');
-    }
+    if (conditionStack.length) throw new Error('Unclosed @if block in prayer source.');
+    if (!documentTitle || !currentSection) throw new Error('Missing prayer title.');
+    flushSection(true);
 
-    if (currentSection && pendingInlineMarker) {
-      currentSection.blocks.push({
-        type: 'comment',
-        text: pendingInlineMarker.text,
-        level: 6,
-        conditions: pendingInlineMarker.conditions,
-      });
-    }
-
-    return {
-      id: documentId,
-      sections,
-    };
+    return { id: documentId, title: documentTitle, sections };
   }
 
-  private toHeadingLevel(markerCount: number): 3 | 4 | 5 | 6 {
-    return Math.min(markerCount + 1, 6) as 3 | 4 | 5 | 6;
+  private createSectionId(title: string, counts: Map<string, number>): string {
+    const baseId = title
+      .normalize('NFKD')
+      .replace(/[\u0591-\u05BD\u05BF-\u05C7]/g, '')
+      .toLocaleLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, '-')
+      .replace(/^-|-$/g, '') || 'section';
+    const occurrence = (counts.get(baseId) ?? 0) + 1;
+    counts.set(baseId, occurrence);
+    return occurrence === 1 ? baseId : `${baseId}-${occurrence}`;
   }
 
   private isInlineMarker(value: string): boolean {
@@ -179,47 +158,21 @@ export class PrayerDocumentParserService {
   private pushBlock(
     section: PrayerSectionDocument,
     block: PrayerBlock,
-    pendingInlineMarker?: {
-      text: string;
-      conditions?: PrayerConditionRuleId[];
-    },
+    marker?: { text: string; conditions?: PrayerConditionRuleId[] },
   ): void {
-    if (
-      pendingInlineMarker &&
-      this.conditionsMatch(block.conditions, pendingInlineMarker.conditions)
-    ) {
-      section.blocks.push({
-        ...block,
-        marker: pendingInlineMarker.text,
-      });
+    if (marker && this.conditionsMatch(block.conditions, marker.conditions)) {
+      section.blocks.push({ ...block, marker: marker.text });
       return;
     }
-
-    if (pendingInlineMarker) {
-      section.blocks.push({
-        type: 'comment',
-        text: pendingInlineMarker.text,
-        level: 6,
-        conditions: pendingInlineMarker.conditions,
-      });
+    if (marker) {
+      section.blocks.push({ type: 'comment', text: marker.text, level: 6, conditions: marker.conditions });
     }
-
     section.blocks.push(block);
   }
 
-  private conditionsMatch(
-    left: PrayerConditionRuleId[] | undefined,
-    right: PrayerConditionRuleId[] | undefined,
-  ): boolean {
-    if (!left?.length && !right?.length) {
-      return true;
-    }
-
-    if ((left?.length ?? 0) !== (right?.length ?? 0)) {
-      return false;
-    }
-
-    return (left ?? []).every((entry, index) => entry === right?.[index]);
+  private conditionsMatch(left?: PrayerConditionRuleId[], right?: PrayerConditionRuleId[]): boolean {
+    return (left?.length ?? 0) === (right?.length ?? 0) &&
+      (left ?? []).every((entry, index) => entry === right?.[index]);
   }
 
   private cloneConditions(conditions: PrayerConditionRuleId[]): PrayerConditionRuleId[] | undefined {

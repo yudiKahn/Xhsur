@@ -16,8 +16,10 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/angular/standalone';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { PrayerPresetSummary, ResolvedPrayerSection } from '../../models/prayer-preset.model';
+import { TranslatePipe } from '@ngx-translate/core';
+import { PrayerSectionDocument } from '../../models/prayer-content.model';
+import { PrayerPresetSummary } from '../../models/prayer-preset.model';
+import { PrayerContentService } from '../../services/prayer-content.service';
 import { PrayerPresetsService } from '../../services/prayer-presets.service';
 
 @Component({
@@ -45,9 +47,9 @@ export class HomePage implements OnInit {
   primaryPresets: PrayerPresetSummary[] = [];
   supplementalPresets: PrayerPresetSummary[] = [];
   private readonly actionSheetController = inject(ActionSheetController);
+  private readonly prayerContentService = inject(PrayerContentService);
   private readonly prayerPresetsService = inject(PrayerPresetsService);
   private readonly router = inject(Router);
-  private readonly translateService = inject(TranslateService);
   private readonly primaryPresetIds = new Set(['shacharit', 'mincha', 'maariv']);
 
   constructor() {
@@ -66,12 +68,33 @@ export class HomePage implements OnInit {
     preset: PrayerPresetSummary,
     sectionId?: string,
   ): Promise<void> {
-    if (!sectionId && preset.sections.length > 1) {
-      await this.presentSubPresets(preset);
-      return;
+    if (!sectionId) {
+      const document = await this.prayerContentService.getPrayerDocument(preset.assetPath);
+      if (document.sections.length > 1) {
+        await this.presentSubPresets(preset, document.sections);
+        return;
+      }
     }
 
     this.navigateToPreset(preset, sectionId);
+  }
+
+  private async presentSubPresets(
+    preset: PrayerPresetSummary,
+    sections: PrayerSectionDocument[],
+  ): Promise<void> {
+    if (!sections.length) {
+      this.navigateToPreset(preset);
+      return;
+    }
+
+    const actionSheet = await this.actionSheetController.create({
+      buttons: [
+        ...sections.map((section) => this.toActionSheetButton(preset, section)),
+      ],
+    });
+
+    await actionSheet.present();
   }
 
   trackByPreset(index: number, preset: PrayerPresetSummary): string {
@@ -87,28 +110,12 @@ export class HomePage implements OnInit {
     });
   }
 
-  private async presentSubPresets(preset: PrayerPresetSummary): Promise<void> {
-    const sections = preset.sections;
-    if (!sections.length) {
-      this.navigateToPreset(preset);
-      return;
-    }
-
-    const actionSheet = await this.actionSheetController.create({
-      buttons: [
-        ...sections.map((section) => this.toActionSheetButton(preset, section)),
-      ],
-    });
-
-    await actionSheet.present();
-  }
-
   private toActionSheetButton(
     preset: PrayerPresetSummary,
-    section: ResolvedPrayerSection,
+    section: PrayerSectionDocument,
   ): ActionSheetButton {
     return {
-      text: this.translateService.instant(section.titleKey),
+      text: section.title,
       handler: () => {
         this.navigateToPreset(preset, section.id);
       },
