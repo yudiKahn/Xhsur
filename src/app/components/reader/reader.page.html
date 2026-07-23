@@ -56,6 +56,14 @@
 </ion-popover>
 
 <ion-content class="reader-content">
+  <ion-refresher slot="fixed" (ionRefresh)="refreshReader($event)">
+    <ion-refresher-content
+      pullingText="משוך לרענון"
+      refreshingSpinner="crescent"
+      refreshingText="מרענן…"
+    ></ion-refresher-content>
+  </ion-refresher>
+
   <div class="reader-layout">
     @if (isLoading()) {
       <div class="reader-loading-state">
@@ -89,14 +97,7 @@
               @for (block of section.blocks; track trackByBlock($index, block)) {
                 @switch (block.type) {
                   @case ('heading') {
-                    @switch (block.level) {
-                      @case (1) { <h1>{{ block.text }}</h1> }
-                      @case (2) { <h2>{{ block.text }}</h2> }
-                      @case (3) { <h3>{{ block.text }}</h3> }
-                      @case (4) { <h4>{{ block.text }}</h4> }
-                      @case (5) { <h5>{{ block.text }}</h5> }
-                      @default { <h6>{{ block.text }}</h6> }
-                    }
+                    <!--Do nothing-->
                   }
                   @case ('comment') {
                     <aside class="siddur-note">

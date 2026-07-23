@@ -31,6 +31,10 @@ export class PrayerContentService {
     };
   }
 
+  clearDocumentCache(): void {
+    this.documentCache.clear();
+  }
+
   private async loadPrayerDocument(assetPath: string): Promise<PrayerDocument> {
     const cached = this.documentCache.get(assetPath);
     if (cached) return cached;

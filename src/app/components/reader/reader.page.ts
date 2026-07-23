@@ -13,10 +13,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
+import { RefresherCustomEvent } from '@ionic/angular';
 import {
   IonButton,
   IonContent,
   IonHeader,
+  IonRefresher,
+  IonRefresherContent,
   IonPopover,
   IonSpinner,
   IonToolbar,
@@ -52,6 +55,8 @@ type SwiperElement = HTMLElement & {
     IonIcon,
     IonHeader,
     IonPopover,
+    IonRefresher,
+    IonRefresherContent,
     IonSpinner,
     IonToolbar,
     TranslatePipe,
@@ -147,6 +152,20 @@ export class ReaderPage implements OnInit, AfterViewInit {
     }
   }
 
+  async refreshReader(event: RefresherCustomEvent): Promise<void> {
+    const presetId = this.activatedRoute.snapshot.paramMap.get('presetId');
+    const sectionId = this.activeSection()?.id
+      ?? this.activatedRoute.snapshot.queryParamMap.get('section');
+
+    try {
+      this.contentService.clearDocumentCache();
+      await this.clearAppCaches();
+      await this.loadReaderContent(presetId, sectionId);
+    } finally {
+      await event.target.complete();
+    }
+  }
+
   selectSection(index: number): void {
     this.activeSectionIndex.set(index);
     this.readerSwiper?.nativeElement.swiper?.slideTo(index);
@@ -217,6 +236,17 @@ export class ReaderPage implements OnInit, AfterViewInit {
     const horizontalDistance = touches[1].clientX - touches[0].clientX;
     const verticalDistance = touches[1].clientY - touches[0].clientY;
     return Math.hypot(horizontalDistance, verticalDistance);
+  }
+
+  private async clearAppCaches(): Promise<void> {
+    if (!('caches' in window)) return;
+
+    const cacheNames = await window.caches.keys();
+    await Promise.all(
+      cacheNames
+        .filter((cacheName) => cacheName.startsWith('siddur-app-'))
+        .map((cacheName) => window.caches.delete(cacheName)),
+    );
   }
 
   private scrollSectionToTop(index: number): void {
