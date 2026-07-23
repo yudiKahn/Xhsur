@@ -1,8 +1,8 @@
 :host {
-  --home-background: #fbfaf7;
-  --home-navy: #071d45;
-  --home-gold: #b89a60;
-  --home-muted: #8b8a87;
+  --home-background: var(--app-color-background);
+  --home-ink: var(--app-color-secondary);
+  --home-gold: var(--app-color-primary);
+  --home-muted: var(--app-color-muted);
   display: block;
   min-height: 100%;
   color-scheme: light;
@@ -11,7 +11,7 @@
 
 .home-content {
   --background: var(--home-background);
-  --color: var(--home-navy);
+  --color: var(--home-ink);
   --ion-background-color: var(--home-background);
   background: var(--home-background);
 }
@@ -28,7 +28,7 @@
   margin: 0 auto;
   padding: calc(26px + env(safe-area-inset-top, 0px)) 22px calc(34px + env(safe-area-inset-bottom, 0px));
   position: relative;
-  color: var(--home-navy);
+  color: var(--home-ink);
 }
 
 .home-info-button {
@@ -65,7 +65,7 @@
 
 .home-hero h1 {
   margin: 0;
-  color: var(--home-navy);
+  color: var(--home-ink);
   font-size: clamp(2.25rem, 8vw, 3.35rem);
   font-weight: 700;
   line-height: 1.12;
@@ -83,7 +83,7 @@
   height: 1px;
   position: relative;
   margin: 25px auto 0;
-  background: rgba(184, 154, 96, 0.55);
+  background: rgba(var(--app-color-primary-rgb), 0.55);
 }
 
 .home-ornament::after {
@@ -114,11 +114,11 @@
   align-items: center;
   gap: 18px;
   padding: 14px 25px;
-  border: 1px solid rgba(7, 29, 69, 0.025);
+  border: 1px solid rgba(var(--app-color-secondary-rgb), 0.025);
   border-radius: 20px;
-  color: var(--home-navy);
+  color: var(--home-ink);
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 8px 24px rgba(24, 31, 45, 0.08);
+  box-shadow: 0 8px 24px rgba(var(--app-color-secondary-rgb), 0.08);
   text-align: start;
   cursor: pointer;
   transition: transform 150ms ease, box-shadow 150ms ease;
@@ -126,12 +126,12 @@
 
 .prayer-card:active {
   transform: scale(0.985);
-  box-shadow: 0 4px 14px rgba(24, 31, 45, 0.1);
+  box-shadow: 0 4px 14px rgba(var(--app-color-secondary-rgb), 0.1);
 }
 
 .prayer-card:focus-visible,
 .home-info-button:focus-visible {
-  outline: 3px solid rgba(184, 154, 96, 0.5);
+  outline: 3px solid rgba(var(--app-color-primary-rgb), 0.5);
   outline-offset: 3px;
 }
 
@@ -139,17 +139,17 @@
   width: 68px;
   height: 62px;
   object-fit: contain;
-  filter: invert(11%) sepia(36%) saturate(2864%) hue-rotate(190deg) brightness(82%) contrast(106%);
+  filter: invert(15%) sepia(9%) saturate(909%) hue-rotate(351deg) brightness(91%) contrast(89%);
 }
 
 .prayer-card__title {
-  color: var(--home-navy);
+  color: var(--home-ink);
   font-size: clamp(1.45rem, 5vw, 1.85rem);
   line-height: 1.2;
 }
 
 .prayer-card__chevron {
-  color: var(--home-navy);
+  color: var(--home-ink);
   font-family: Arial, sans-serif;
   font-size: 2.45rem;
   font-weight: 200;
@@ -168,7 +168,7 @@
   content: "";
   height: 1px;
   flex: 1;
-  background: rgba(184, 154, 96, 0.22);
+  background: rgba(var(--app-color-primary-rgb), 0.22);
 }
 
 .home-section-divider span {

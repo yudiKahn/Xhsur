@@ -1,5 +1,5 @@
 .reader-content {
-  --background: #ffffff;
+  --background: var(--app-color-background);
   --overflow: hidden;
   --reader-stage-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
 }
@@ -22,8 +22,8 @@ ion-content.reader-content::part(scroll) {
   align-items: center;
   justify-content: center;
   z-index: 2;
-  color: var(--app-color-secondary);
-  background: rgba(255, 255, 255, 0.7);
+  color: var(--app-color-primary);
+  background: rgba(var(--app-color-background-rgb), 0.82);
 }
 
 .reader-loading-state ion-spinner {
@@ -53,7 +53,7 @@ ion-content.reader-content::part(scroll) {
   overscroll-behavior-y: contain;
   touch-action: pan-y;
   padding: 8px 14px calc(24px + env(safe-area-inset-bottom, 0px));
-  color: #131313;
+  color: var(--app-color-secondary);
   font-size: 1.08rem;
   line-height: 1.8;
   text-align: right;
@@ -88,26 +88,12 @@ ion-content.reader-content::part(scroll) {
   color: #b00020;
 }
 
-@media (prefers-color-scheme: dark) {
-  .reader-content { --background: #000000; }
-
-  .reader-layout,
-  .reader-loading-state,
-  .reader-sections,
-  .reader-section-content {
-    background: #000000;
-  }
-
-  .reader-loading-state { background: rgba(0, 0, 0, 0.85); }
-  .reader-section-content { color: #ffffff; }
-}
-
 .reader-back-button {
-  --background: rgba(var(--app-color-secondary-rgb), 0.12);
-  --background-hover: rgba(var(--app-color-secondary-rgb), 0.2);
-  --background-activated: rgba(var(--app-color-secondary-rgb), 0.28);
-  --color: var(--app-color-secondary);
-  --box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+  --background: rgba(var(--app-color-primary-rgb), 0.14);
+  --background-hover: rgba(var(--app-color-primary-rgb), 0.22);
+  --background-activated: rgba(var(--app-color-primary-rgb), 0.3);
+  --color: var(--app-color-primary);
+  --box-shadow: 0 12px 28px rgba(var(--app-color-secondary-rgb), 0.18);
   --padding-start: 0;
   --padding-end: 0;
   width: 52px;

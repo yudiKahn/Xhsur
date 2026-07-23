@@ -32,10 +32,6 @@
  * https://ionicframework.com/docs/theming/dark-mode
  */
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
-
 @font-face {
   font-family: "Drugulin CLM";
   src:
@@ -68,7 +64,7 @@
 
 html,
 body {
-  background: var(--app-color-primary);
+  background: var(--app-color-background);
   color: var(--app-color-secondary);
   font-family: "Drugulin CLM", "Times New Roman", serif;
 }
@@ -84,22 +80,22 @@ ion-toolbar,
 ion-list,
 ion-item,
 ion-card {
-  --background: var(--app-color-primary);
+  --background: var(--app-color-background);
   --color: var(--app-color-secondary);
   font-family: "Drugulin CLM", "Times New Roman", serif;
 }
 
 ion-item {
   --background: var(--app-color-surface);
-  --background-hover: rgba(var(--app-color-surface-rgb), 0.92);
-  --background-activated: rgba(var(--app-color-surface-rgb), 0.82);
-  --border-color: rgba(var(--app-color-secondary-rgb), 0.18);
+  --background-hover: rgba(var(--app-color-primary-rgb), 0.08);
+  --background-activated: rgba(var(--app-color-primary-rgb), 0.14);
+  --border-color: rgba(var(--app-color-primary-rgb), 0.18);
 }
 
 ion-button {
   --background: var(--app-color-surface);
-  --background-hover: rgba(var(--app-color-surface-rgb), 0.92);
-  --background-activated: rgba(var(--app-color-surface-rgb), 0.82);
+  --background-hover: rgba(var(--app-color-primary-rgb), 0.08);
+  --background-activated: rgba(var(--app-color-primary-rgb), 0.14);
   --color: var(--app-color-secondary);
 }
 
@@ -116,7 +112,7 @@ ion-loading {
 ion-action-sheet {
   --background: var(--app-color-surface);
   --button-background: var(--app-color-surface);
-  --button-background-selected: rgba(var(--app-color-secondary-rgb), 0.16);
+  --button-background-selected: rgba(var(--app-color-primary-rgb), 0.16);
   --button-color: var(--app-color-secondary);
   --header-color: var(--app-color-secondary);
   --backdrop-opacity: 0.48;
@@ -173,11 +169,11 @@ ion-popover {
 }
 
 ion-action-sheet.home-prayer-sheet {
-  --background: #fbfaf7;
-  --button-background: #fbfaf7;
-  --button-background-selected: rgba(184, 154, 96, 0.16);
-  --button-color: #071d45;
-  --header-color: #071d45;
+  --background: var(--app-color-background);
+  --button-background: var(--app-color-background);
+  --button-background-selected: rgba(var(--app-color-primary-rgb), 0.16);
+  --button-color: var(--app-color-secondary);
+  --header-color: var(--app-color-secondary);
   --backdrop-opacity: 0.28;
 }
 
@@ -185,20 +181,20 @@ ion-action-sheet.home-prayer-sheet {
 .home-prayer-sheet .action-sheet-group,
 .home-prayer-sheet .action-sheet-title,
 .home-prayer-sheet [id^="action-sheet-"][id$="-header"] {
-  background: #fbfaf7 !important;
-  color: #071d45 !important;
+  background: var(--app-color-background) !important;
+  color: var(--app-color-secondary) !important;
 }
 
 .home-prayer-sheet .action-sheet-button {
-  background: #fbfaf7 !important;
-  color: #071d45 !important;
-  border-top-color: rgba(184, 154, 96, 0.18) !important;
+  background: var(--app-color-background) !important;
+  color: var(--app-color-secondary) !important;
+  border-top-color: rgba(var(--app-color-primary-rgb), 0.18) !important;
 }
 
 .home-prayer-sheet .action-sheet-button:hover,
 .home-prayer-sheet .action-sheet-button:focus,
 .home-prayer-sheet .action-sheet-button.ion-activated {
-  background: rgba(184, 154, 96, 0.12) !important;
+  background: rgba(var(--app-color-primary-rgb), 0.12) !important;
 }
 
 ion-title,
