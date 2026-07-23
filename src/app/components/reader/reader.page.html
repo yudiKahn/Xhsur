@@ -77,7 +77,15 @@
       >
         @for (section of sections(); track trackBySection($index, section)) {
           <swiper-slide>
-            <article class="reader-section-content siddur-text-body" dir="rtl">
+            <article
+              class="reader-section-content siddur-text-body"
+              dir="rtl"
+              [style.--reader-font-scale]="readerFontScale()"
+              (touchstart)="onPinchStart($event)"
+              (touchmove)="onPinchMove($event)"
+              (touchend)="onPinchEnd($event)"
+              (touchcancel)="onPinchEnd($event)"
+            >
               @for (block of section.blocks; track trackByBlock($index, block)) {
                 @switch (block.type) {
                   @case ('heading') {

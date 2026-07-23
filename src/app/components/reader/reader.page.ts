@@ -61,6 +61,7 @@ type SwiperElement = HTMLElement & {
 export class ReaderPage implements OnInit, AfterViewInit {
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
+  readonly readerFontScale = signal(1);
   readonly prayerTitle = signal('');
   readonly sections = signal<PrayerSectionDocument[]>([]);
   readonly activeSectionIndex = signal(0);
@@ -80,6 +81,10 @@ export class ReaderPage implements OnInit, AfterViewInit {
   private readonly presetsService = inject(PrayerPresetsService);
   private readonly router = inject(Router);
 
+  private readonly minimumFontScale = 0.8;
+  private readonly maximumFontScale = 1.6;
+  private pinchStartDistance: number | null = null;
+  private pinchStartFontScale = 1;
 
   constructor() {
     addIcons({
@@ -113,6 +118,33 @@ export class ReaderPage implements OnInit, AfterViewInit {
 
     this.activeSectionIndex.set(swiper.activeIndex);
     requestAnimationFrame(() => this.scrollSectionToTop(swiper.activeIndex));
+  }
+
+  onPinchStart(event: TouchEvent): void {
+    if (event.touches.length !== 2) return;
+
+    event.stopPropagation();
+    this.pinchStartDistance = this.getTouchDistance(event.touches);
+    this.pinchStartFontScale = this.readerFontScale();
+  }
+
+  onPinchMove(event: TouchEvent): void {
+    if (event.touches.length !== 2 || this.pinchStartDistance === null) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const scaleChange = this.getTouchDistance(event.touches) / this.pinchStartDistance;
+    const nextScale = this.pinchStartFontScale * scaleChange;
+    this.readerFontScale.set(
+      Math.min(this.maximumFontScale, Math.max(this.minimumFontScale, nextScale)),
+    );
+  }
+
+  onPinchEnd(event: TouchEvent): void {
+    if (event.touches.length < 2) {
+      this.pinchStartDistance = null;
+    }
   }
 
   selectSection(index: number): void {
@@ -179,6 +211,12 @@ export class ReaderPage implements OnInit, AfterViewInit {
       touchStartPreventDefault: false,
     });
     element.initialize();
+  }
+
+  private getTouchDistance(touches: TouchList): number {
+    const horizontalDistance = touches[1].clientX - touches[0].clientX;
+    const verticalDistance = touches[1].clientY - touches[0].clientY;
+    return Math.hypot(horizontalDistance, verticalDistance);
   }
 
   private scrollSectionToTop(index: number): void {
