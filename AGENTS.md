@@ -26,3 +26,4 @@ Position different domains in own directory (e.g. Services, Models, Componenets,
   - Lines starting with `>` are notes/comments.
   - Blank lines are ignored and just separate blocks for readability.
   - `@if rule` and `@endif` wrap conditional blocks.
+  - `@small` and `@endsmall` wrap inline text that continues the surrounding paragraph in a smaller font.

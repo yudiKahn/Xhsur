@@ -52,6 +52,41 @@ describe('PrayerDocumentParserService', () => {
     expect(document.sections[0].blocks[1].type).toBe('comment');
   });
 
+  it('keeps @small content inline within its surrounding paragraph', () => {
+    const document = parser.parseMarkdownDocument([
+      '# תפילה',
+      'טקסט רגיל',
+      '@small',
+      'טקסט קטן',
+      '@endsmall',
+      'המשך טקסט רגיל',
+    ].join('\n'), 'test');
+
+    const paragraph = document.sections[0].blocks[1];
+    expect(document.sections[0].blocks).toHaveSize(2);
+    expect(paragraph.type).toBe('paragraph');
+    expect(paragraph.segments).toEqual([
+      { text: 'טקסט רגיל' },
+      { text: ' טקסט קטן', size: 'small' },
+      { text: ' המשך טקסט רגיל', size: undefined },
+    ]);
+  });
+
+  it('rejects invalid small text blocks', () => {
+    expect(() => parser.parseMarkdownDocument(
+      '# תפילה\nטקסט רגיל\n@small\nטקסט קטן',
+      'test',
+    )).toThrowError(/Unclosed @small/);
+    expect(() => parser.parseMarkdownDocument(
+      '# תפילה\n@endsmall',
+      'test',
+    )).toThrowError(/Unexpected @endsmall/);
+    expect(() => parser.parseMarkdownDocument(
+      '# תפילה\n@small\nטקסט קטן\n@endsmall',
+      'test',
+    )).toThrowError(/must follow paragraph text/);
+  });
+
   it('rejects content without a prayer title and unclosed conditions', () => {
     expect(() => parser.parseMarkdownDocument('תוכן', 'test')).toThrow();
     expect(() => parser.parseMarkdownDocument('# תפילה\n@if show-tachanun\nתוכן', 'test')).toThrow();

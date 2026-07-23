@@ -111,7 +111,13 @@
                       @if (block.marker) {
                         <span class="siddur-inline-marker">{{ block.marker }}</span>
                       }
-                      {{ block.text }}
+                      @if (block.segments?.length) {
+                        @for (segment of block.segments; track $index) {
+                          <span [class.siddur-small-text]="segment.size === 'small'">{{ segment.text }}</span>
+                        }
+                      } @else {
+                        {{ block.text }}
+                      }
                     </p>
                   }
                 }
