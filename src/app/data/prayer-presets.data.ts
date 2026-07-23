@@ -31,4 +31,10 @@ export const PRAYER_PRESETS: PrayerPresetDefinition[] = [
     order: 5,
     assetPath: 'assets/siddur/mhariv.md',
   },
+  {
+    id: 'kryat-shema',
+    titleKey: 'presets.kriatShemaAlHamita.title',
+    order: 5,
+    assetPath: 'assets/siddur/kryat-shema.md',
+  },
 ];

@@ -98,6 +98,8 @@ export class HomePage implements OnInit {
         return 'assets/icons/evening.svg';
       case 'birkat-hamazon':
         return 'assets/icons/bread.svg';
+      case 'kryat-shema':
+        return 'assets/icons/night.svg';
       default:
         return 'assets/icons/noon.svg';
     }
