@@ -16,7 +16,7 @@
     <section class="preset-group" [attr.aria-label]="'home.choosePrayer' | translate">
       @for (preset of primaryPresets; track trackByPreset($index, preset)) {
         <button class="prayer-card" type="button" (click)="openPreset(preset)">
-          <img class="prayer-card__icon" [src]="getPresetIcon(preset.id)" alt="" />
+          <!-- <img class="prayer-card__icon" [src]="getPresetIcon(preset.id)" alt="" /> -->
           <span class="prayer-card__title">{{ preset.titleKey | translate }}</span>
           <span class="prayer-card__chevron" aria-hidden="true">›</span>
         </button>
@@ -28,7 +28,7 @@
     <section class="preset-group secondary" [attr.aria-label]="'home.additionalPrayers' | translate">
       @for (preset of supplementalPresets; track trackByPreset($index, preset)) {
         <button class="prayer-card" type="button" (click)="openPreset(preset)">
-          <img class="prayer-card__icon" [src]="getPresetIcon(preset.id)" alt="" />
+          <!-- <img class="prayer-card__icon" [src]="getPresetIcon(preset.id)" alt="" /> -->
           <span class="prayer-card__title">{{ preset.titleKey | translate }}</span>
           <span class="prayer-card__chevron" aria-hidden="true">›</span>
         </button>

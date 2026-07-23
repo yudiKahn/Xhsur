@@ -168,6 +168,10 @@ ion-content.reader-content::part(scroll) {
   -webkit-overflow-scrolling: touch;
 }
 
+::-webkit-scrollbar {
+    display: none;
+}
+
 .reader-section-content.siddur-text-body,
 .reader-section-content.siddur-text-body h1,
 .reader-section-content.siddur-text-body h2,
