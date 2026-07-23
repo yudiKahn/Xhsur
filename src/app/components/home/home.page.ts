@@ -95,7 +95,9 @@ export class HomePage implements OnInit {
       case 'tefilat-haderech':
         return 'assets/icons/road.svg';
       case 'maariv':
-        return 'assets/icons/morning.svg';
+        return 'assets/icons/evening.svg';
+      case 'birkat-hamazon':
+        return 'assets/icons/bread.svg';
       default:
         return 'assets/icons/noon.svg';
     }
