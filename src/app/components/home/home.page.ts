@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { informationCircleOutline } from 'ionicons/icons';
+import { information } from 'ionicons/icons';
 import {
   ActionSheetButton,
   ActionSheetController,
@@ -38,7 +38,7 @@ export class HomePage implements OnInit {
 
   constructor() {
     addIcons({
-      'information-circle-outline': informationCircleOutline,
+      'information': information,
     });
   }
 

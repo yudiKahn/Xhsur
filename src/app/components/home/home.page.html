@@ -5,14 +5,12 @@
       routerLink="/about"
       [attr.aria-label]="'about.title' | translate"
     >
-      <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
+      <ion-icon name="information"></ion-icon>
     </a>
 
     <header class="home-hero">
       <img class="home-brand-mark" src="assets/icons/siddur.svg" alt="" />
       <h1>{{ 'app.title' | translate }}</h1>
-      <span class="home-ornament" aria-hidden="true"></span>
-      <p>{{ 'home.choosePrayer' | translate }}</p>
     </header>
 
     <section class="preset-group" [attr.aria-label]="'home.choosePrayer' | translate">
@@ -25,9 +23,9 @@
       }
     </section>
 
-    <div class="home-section-divider" aria-hidden="true"><span></span></div>
+    
 
-    <section class="preset-group" [attr.aria-label]="'home.additionalPrayers' | translate">
+    <section class="preset-group secondary" [attr.aria-label]="'home.additionalPrayers' | translate">
       @for (preset of supplementalPresets; track trackByPreset($index, preset)) {
         <button class="prayer-card" type="button" (click)="openPreset(preset)">
           <img class="prayer-card__icon" [src]="getPresetIcon(preset.id)" alt="" />
