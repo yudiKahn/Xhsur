@@ -187,6 +187,8 @@ ion-content.reader-content::part(scroll) {
   margin-block: 0.75em;
   font-size: 0.88em;
   line-height: 1.6;
+  text-align: center;
+  text-decoration: underline;
 }
 
 .reader-error-text {
