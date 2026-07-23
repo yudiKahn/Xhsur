@@ -1,4 +1,61 @@
-<ion-content [fullscreen]="true" class="reader-content">
+<ion-header class="reader-header">
+  <ion-toolbar class="reader-toolbar">
+    <ion-button
+      class="reader-toolbar__back"
+      fill="clear"
+      slot="start"
+      type="button"
+      [attr.aria-label]="'common.actions.back' | translate"
+      (click)="goBack()"
+    >
+      <ion-icon name="chevron-back-outline"></ion-icon>
+    </ion-button>
+
+    <button
+      id="section-navigation-trigger"
+      class="reader-toolbar__title"
+      type="button"
+      [disabled]="!hasSectionNavigation()"
+      [attr.aria-label]="hasSectionNavigation() ? 'בחירת קטע' : null"
+    >
+      <span class="reader-toolbar__prayer-name">{{ prayerTitle() }}</span>
+      @if (activeSection(); as section) {
+        <span class="reader-toolbar__section-name">
+          {{ section.title }}
+          @if (hasSectionNavigation()) {
+            <span class="reader-toolbar__section-arrow" aria-hidden="true"></span>
+          }
+        </span>
+      }
+    </button>
+  </ion-toolbar>
+</ion-header>
+
+<ion-popover
+  #sectionPopover
+  trigger="section-navigation-trigger"
+  triggerAction="click"
+  side="bottom"
+  alignment="center"
+>
+  <ng-template>
+    <nav class="reader-section-navigation" aria-label="קטעי התפילה" dir="rtl">
+      @for (section of sections(); track trackBySection($index, section)) {
+        <button
+          class="reader-section-navigation__item"
+          type="button"
+          [class.reader-section-navigation__item--active]="$index === activeSectionIndex()"
+          [attr.aria-current]="$index === activeSectionIndex() ? 'true' : null"
+          (click)="selectSection($index)"
+        >
+          {{ section.title }}
+        </button>
+      }
+    </nav>
+  </ng-template>
+</ion-popover>
+
+<ion-content class="reader-content">
   <div class="reader-layout">
     @if (isLoading()) {
       <div class="reader-loading-state">
@@ -57,15 +114,5 @@
       </swiper-container>
     }
 
-    <ion-button
-      class="reader-back-button"
-      fill="solid"
-      shape="round"
-      type="button"
-      [attr.aria-label]="'common.actions.back' | translate"
-      (click)="goBack()"
-    >
-      <span class="reader-back-button__icon" aria-hidden="true">&rarr;</span>
-    </ion-button>
   </div>
 </ion-content>

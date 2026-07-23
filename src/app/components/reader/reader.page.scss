@@ -1,7 +1,114 @@
+.reader-header {
+  box-shadow: 0 2px 12px rgba(var(--app-color-secondary-rgb), 0.12);
+}
+
+.reader-toolbar {
+  --background: #ffffff;
+  --border-width: 0;
+  --color: var(--app-color-secondary);
+  --min-height: 72px;
+  position: relative;
+}
+
+.reader-toolbar__back {
+  --color: var(--app-color-primary);
+  --padding-start: 12px;
+  --padding-end: 12px;
+  width: 48px;
+  height: 48px;
+  margin-inline-start: 4px;
+}
+
+.reader-toolbar__back-icon {
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.reader-toolbar__title {
+  position: absolute;
+  top: 50%;
+  left: 64px;
+  right: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  border: 0;
+  color: inherit;
+  text-align: center;
+  background: transparent;
+  transform: translateY(-50%);
+}
+
+.reader-toolbar__title:not(:disabled) {
+  cursor: pointer;
+}
+
+.reader-toolbar__prayer-name {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-toolbar__section-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  max-width: 100%;
+  color: rgba(var(--app-color-secondary-rgb), 0.72);
+  font-size: 0.82rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-toolbar__section-arrow {
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.reader-section-navigation {
+  display: flex;
+  flex-direction: column;
+  max-height: min(60vh, 420px);
+  padding-block: 8px;
+  overflow-y: auto;
+}
+
+.reader-section-navigation__item {
+  min-height: 48px;
+  padding: 10px 20px;
+  border: 0;
+  color: var(--app-color-secondary);
+  font: inherit;
+  text-align: right;
+  background: transparent;
+  cursor: pointer;
+}
+
+.reader-section-navigation__item:hover,
+.reader-section-navigation__item:focus-visible {
+  background: rgba(var(--app-color-primary-rgb), 0.08);
+}
+
+.reader-section-navigation__item--active {
+  color: var(--app-color-primary);
+  font-weight: 700;
+  background: rgba(var(--app-color-primary-rgb), 0.12);
+}
+
 .reader-content {
   --background: var(--app-color-background);
   --overflow: hidden;
-  --reader-stage-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
 }
 
 ion-content.reader-content::part(scroll) {
@@ -9,7 +116,7 @@ ion-content.reader-content::part(scroll) {
 }
 
 .reader-layout {
-  min-height: var(--reader-stage-height, 100vh);
+  height: 100%;
   position: relative;
   overflow: hidden;
   padding: 0 10px;
@@ -34,8 +141,8 @@ ion-content.reader-content::part(scroll) {
 .reader-sections {
   display: block;
   width: 100%;
-  height: var(--reader-stage-height, 100vh);
-  min-height: var(--reader-stage-height, 100vh);
+  height: 100%;
+  min-height: 100%;
 }
 
 .reader-sections::part(container),
@@ -86,32 +193,4 @@ ion-content.reader-content::part(scroll) {
   margin: 48px 0 0;
   text-align: center;
   color: #b00020;
-}
-
-.reader-back-button {
-  --background: rgba(var(--app-color-primary-rgb), 0.14);
-  --background-hover: rgba(var(--app-color-primary-rgb), 0.22);
-  --background-activated: rgba(var(--app-color-primary-rgb), 0.3);
-  --color: var(--app-color-primary);
-  --box-shadow: 0 12px 28px rgba(var(--app-color-secondary-rgb), 0.18);
-  --padding-start: 0;
-  --padding-end: 0;
-  width: 52px;
-  height: 52px;
-  position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 12px);
-  right: 16px;
-  z-index: 3;
-  margin: 0;
-}
-
-.reader-back-button__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 1.5rem;
-  line-height: 1;
-  transform: translateY(-1px);
 }

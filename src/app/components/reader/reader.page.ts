@@ -3,6 +3,7 @@ import {
   CUSTOM_ELEMENTS_SCHEMA,
   AfterViewInit,
   Component,
+  computed,
   DestroyRef,
   ElementRef,
   OnInit,
@@ -12,12 +13,22 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IonButton, IonContent, IonSpinner } from '@ionic/angular/standalone';
+import {
+  IonButton,
+  IonContent,
+  IonHeader,
+  IonPopover,
+  IonSpinner,
+  IonToolbar,
+  IonIcon
+} from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 import { combineLatest } from 'rxjs';
 import { PrayerBlock, PrayerSectionDocument } from '../../models/prayer-content.model';
 import { PrayerContentService } from '../../services/prayer-content.service';
 import { PrayerPresetsService } from '../../services/prayer-presets.service';
+import { addIcons } from 'ionicons';
+import { chevronBackOutline } from 'ionicons/icons';
 
 type SwiperInstance = {
   activeIndex: number;
@@ -35,17 +46,32 @@ type SwiperElement = HTMLElement & {
   templateUrl: './reader.page.html',
   styleUrls: ['./reader.page.scss'],
   standalone: true,
-  imports: [IonButton, IonContent, IonSpinner, TranslatePipe],
+  imports: [
+    IonButton,
+    IonContent,
+    IonIcon,
+    IonHeader,
+    IonPopover,
+    IonSpinner,
+    IonToolbar,
+    TranslatePipe,
+  ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ReaderPage implements OnInit, AfterViewInit {
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
+  readonly prayerTitle = signal('');
   readonly sections = signal<PrayerSectionDocument[]>([]);
   readonly activeSectionIndex = signal(0);
+  readonly activeSection = computed(() => this.sections()[this.activeSectionIndex()]);
+  readonly hasSectionNavigation = computed(() => this.sections().length > 1);
 
   @ViewChild('readerSwiper')
   private readerSwiper?: ElementRef<SwiperElement>;
+
+  @ViewChild('sectionPopover')
+  private sectionPopover?: IonPopover;
 
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly contentService = inject(PrayerContentService);
@@ -53,6 +79,13 @@ export class ReaderPage implements OnInit, AfterViewInit {
   private readonly location = inject(Location);
   private readonly presetsService = inject(PrayerPresetsService);
   private readonly router = inject(Router);
+
+
+  constructor() {
+    addIcons({
+      'chevron-back-outline': chevronBackOutline,
+    });
+  }
 
   ngOnInit(): void {
     combineLatest([this.activatedRoute.paramMap, this.activatedRoute.queryParamMap])
@@ -82,6 +115,12 @@ export class ReaderPage implements OnInit, AfterViewInit {
     requestAnimationFrame(() => this.scrollSectionToTop(swiper.activeIndex));
   }
 
+  selectSection(index: number): void {
+    this.activeSectionIndex.set(index);
+    this.readerSwiper?.nativeElement.swiper?.slideTo(index);
+    void this.sectionPopover?.dismiss();
+  }
+
   trackBySection(index: number, section: PrayerSectionDocument): string {
     return section.id;
   }
@@ -107,6 +146,7 @@ export class ReaderPage implements OnInit, AfterViewInit {
         : 0;
       if (requestedSectionId && initialIndex < 0) throw new Error('Requested section is not available.');
 
+      this.prayerTitle.set(document.title);
       this.sections.set(document.sections);
       this.activeSectionIndex.set(Math.max(0, initialIndex));
       requestAnimationFrame(() => {
@@ -117,6 +157,7 @@ export class ReaderPage implements OnInit, AfterViewInit {
         this.scrollSectionToTop(this.activeSectionIndex());
       });
     } catch {
+      this.prayerTitle.set('');
       this.sections.set([]);
       this.activeSectionIndex.set(0);
       this.loadError.set('Failed to load siddur text content.');
