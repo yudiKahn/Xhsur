@@ -203,3 +203,38 @@
     height: 52px;
   }
 }
+
+.home-header {
+  box-shadow: 0 2px 12px rgba(var(--app-color-secondary-rgb), 0.08);
+}
+
+.home-toolbar {
+  --background: #ffffff;
+  --border-width: 0;
+  --color: var(--home-ink);
+  --min-height: 64px;
+}
+
+.home-toolbar__day {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--home-ink);
+  padding-left: 16px;
+  padding-right: 16px;
+
+}
+
+.home-toolbar__menu-btn {
+  --color: var(--home-gold);
+  --padding-start: 12px;
+  --padding-end: 12px;
+  width: 48px;
+  height: 48px;
+}
+
+.home-menu-list {
+  --background: #ffffff;
+  margin: 0;
+  padding: 0;
+}
+

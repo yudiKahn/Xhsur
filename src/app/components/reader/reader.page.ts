@@ -139,11 +139,37 @@ export class ReaderPage implements OnInit, AfterViewInit {
     event.preventDefault();
     event.stopPropagation();
 
+    const container = event.currentTarget as HTMLElement;
+    if (!container) return;
+
+    // Get current container measurements before style update
+    const containerRect = container.getBoundingClientRect();
+    const pinchViewportY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+    const pinchOffsetY = pinchViewportY - containerRect.top;
+    const scrollHeightBefore = container.scrollHeight;
+    const scrollTopBefore = container.scrollTop;
+
+    // Relative scroll position ratio (from 0 to 1) at the pinch point
+    const contentY = scrollTopBefore + pinchOffsetY;
+    const ratio = scrollHeightBefore > 0 ? contentY / scrollHeightBefore : 0;
+
+    // Calculate next scale
     const scaleChange = this.getTouchDistance(event.touches) / this.pinchStartDistance;
     const nextScale = this.pinchStartFontScale * scaleChange;
-    this.readerFontScale.set(
-      Math.min(this.maximumFontScale, Math.max(this.minimumFontScale, nextScale)),
-    );
+    const clampedScale = Math.min(this.maximumFontScale, Math.max(this.minimumFontScale, nextScale));
+
+    // Update styling synchronously on the element to avoid lag/jumps
+    container.style.setProperty('--reader-font-scale', clampedScale.toString());
+
+    // Update the signal so Angular state is synced
+    this.readerFontScale.set(clampedScale);
+
+    // Read the new scroll height after style change (synchronous layout reflow)
+    const scrollHeightAfter = container.scrollHeight;
+
+    // Adjust scroll top to keep the same relative content position under the pinch center
+    const newScrollTop = (ratio * scrollHeightAfter) - pinchOffsetY;
+    container.scrollTop = newScrollTop;
   }
 
   onPinchEnd(event: TouchEvent): void {

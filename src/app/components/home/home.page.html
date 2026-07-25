@@ -1,4 +1,28 @@
-<ion-content [fullscreen]="true" class="home-content">
+<ion-header class="home-header">
+  <ion-toolbar class="home-toolbar">
+    <ion-buttons slot="start">
+      <ion-button id="home-menu-trigger" class="home-toolbar__menu-btn" fill="clear">
+        <ion-icon slot="icon-only" name="menu"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <div class="home-toolbar__day">יום חמישי י' אב</div>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-popover #aboutPopover trigger="home-menu-trigger" triggerAction="click" side="bottom" alignment="end">
+  <ng-template>
+    <ion-list class="home-menu-list">
+      <ion-item button routerLink="/about" (click)="aboutPopover.dismiss()">
+        <ion-icon slot="start" name="information-circle-outline"></ion-icon>
+        <ion-label>{{ 'about.title' | translate }}</ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-template>
+</ion-popover>
+
+<ion-content class="home-content">
   <main class="home-layout">
     <!-- <a
       class="home-info-button"

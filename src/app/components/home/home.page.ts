@@ -1,14 +1,22 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { information } from 'ionicons/icons';
 import {
   ActionSheetButton,
   ActionSheetController,
   IonContent,
   IonIcon,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonButton,
+  IonPopover,
+  IonList,
+  IonItem,
+  IonLabel,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
+import { menu, informationCircleOutline } from 'ionicons/icons';
 import { PrayerSectionDocument } from '../../models/prayer-content.model';
 import { PrayerPresetSummary } from '../../models/prayer-preset.model';
 import { PrayerContentService } from '../../services/prayer-content.service';
@@ -22,6 +30,14 @@ import { PrayerPresetsService } from '../../services/prayer-presets.service';
   imports: [
     IonContent,
     IonIcon,
+    IonHeader,
+    IonToolbar,
+    IonButtons,
+    IonButton,
+    IonPopover,
+    IonList,
+    IonItem,
+    IonLabel,
     RouterLink,
     TranslatePipe,
   ],
@@ -38,7 +54,8 @@ export class HomePage implements OnInit {
 
   constructor() {
     addIcons({
-      'information': information,
+      'information-circle-outline': informationCircleOutline,
+      'menu': menu,
     });
   }
 
