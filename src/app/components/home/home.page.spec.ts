@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { ActionSheetButton, ActionSheetController, ActionSheetOptions } from '@ionic/angular/standalone';
 import { TranslateModule } from '@ngx-translate/core';
 import { PrayerDocument } from '../../models/prayer-content.model';
 import { PrayerContentService } from '../../services/prayer-content.service';
+import { JewishCalendarService } from '../../services/jewish-calendar.service';
 import { HomePage } from './home.page';
 
 describe('HomePage', () => {
@@ -11,23 +11,22 @@ describe('HomePage', () => {
   let fixture: ComponentFixture<HomePage>;
   let router: Router;
   let contentService: jasmine.SpyObj<PrayerContentService>;
-  let actionSheetController: jasmine.SpyObj<ActionSheetController>;
-  let capturedOptions: ActionSheetOptions | undefined;
+  let calendarService: jasmine.SpyObj<JewishCalendarService>;
 
   beforeEach(async () => {
     contentService = jasmine.createSpyObj<PrayerContentService>('PrayerContentService', ['getPrayerDocument']);
-    actionSheetController = jasmine.createSpyObj<ActionSheetController>('ActionSheetController', ['create']);
-    actionSheetController.create.and.callFake(async (options?: ActionSheetOptions) => {
-      capturedOptions = options;
-      return { present: jasmine.createSpy('present').and.resolveTo() } as never;
-    });
+    calendarService = jasmine.createSpyObj<JewishCalendarService>(
+      'JewishCalendarService',
+      ['getCurrentDayLabel'],
+    );
+    calendarService.getCurrentDayLabel.and.returnValue('יום חמישי י׳ אב');
 
     await TestBed.configureTestingModule({
       imports: [HomePage, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
         { provide: PrayerContentService, useValue: contentService },
-        { provide: ActionSheetController, useValue: actionSheetController },
+        { provide: JewishCalendarService, useValue: calendarService },
       ],
     }).compileComponents();
 
@@ -44,18 +43,20 @@ describe('HomePage', () => {
     ]);
   });
 
-  it('opens a Markdown-derived section sheet for a multi-section prayer', async () => {
+  it('shows the current Jewish day in the header', () => {
+    const header = fixture.nativeElement.querySelector('.home-toolbar__day');
+
+    expect(header.textContent.trim()).toBe('יום חמישי י׳ אב');
+  });
+
+  it('opens the first section and requests the reader section menu for a multi-section prayer', async () => {
     contentService.getPrayerDocument.and.resolveTo(documentWithSections(['ברכות השחר', 'הודו']));
     const preset = component.presets[0];
 
     await component.openPreset(preset);
 
-    const buttons = (capturedOptions?.buttons ?? []) as ActionSheetButton[];
-    expect(capturedOptions?.cssClass).toBe('home-prayer-sheet');
-    expect(buttons.map((button) => button.text)).toEqual(['ברכות השחר', 'הודו']);
-    buttons[1].handler?.();
     expect(router.navigate).toHaveBeenCalledWith(['/reader', 'shacharit'], {
-      queryParams: { section: 'section-1' },
+      queryParams: { section: 'section-0', openSectionMenu: true },
     });
   });
 
@@ -65,8 +66,9 @@ describe('HomePage', () => {
 
     await component.openPreset(preset);
 
-    expect(actionSheetController.create).not.toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/reader', 'tefilat-haderech'], { queryParams: {} });
+    expect(router.navigate).toHaveBeenCalledWith(['/reader', 'tefilat-haderech'], {
+      queryParams: { section: 'section-0' },
+    });
   });
 
   function documentWithSections(titles: string[]): PrayerDocument {

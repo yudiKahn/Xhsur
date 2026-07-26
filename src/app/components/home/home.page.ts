@@ -2,8 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { addIcons } from 'ionicons';
 import {
-  ActionSheetButton,
-  ActionSheetController,
   IonContent,
   IonIcon,
   IonHeader,
@@ -17,9 +15,9 @@ import {
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 import { menu, informationCircleOutline } from 'ionicons/icons';
-import { PrayerSectionDocument } from '../../models/prayer-content.model';
 import { PrayerPresetSummary } from '../../models/prayer-preset.model';
 import { PrayerContentService } from '../../services/prayer-content.service';
+import { JewishCalendarService } from '../../services/jewish-calendar.service';
 import { PrayerPresetsService } from '../../services/prayer-presets.service';
 
 @Component({
@@ -43,10 +41,10 @@ import { PrayerPresetsService } from '../../services/prayer-presets.service';
   ],
 })
 export class HomePage implements OnInit {
+  readonly currentDayLabel = inject(JewishCalendarService).getCurrentDayLabel();
   presets: PrayerPresetSummary[] = [];
   primaryPresets: PrayerPresetSummary[] = [];
   supplementalPresets: PrayerPresetSummary[] = [];
-  private readonly actionSheetController = inject(ActionSheetController);
   private readonly prayerContentService = inject(PrayerContentService);
   private readonly prayerPresetsService = inject(PrayerPresetsService);
   private readonly router = inject(Router);
@@ -67,36 +65,10 @@ export class HomePage implements OnInit {
 
   async openPreset(
     preset: PrayerPresetSummary,
-    sectionId?: string,
   ): Promise<void> {
-    if (!sectionId) {
-      const document = await this.prayerContentService.getPrayerDocument(preset.assetPath);
-      if (document.sections.length > 1) {
-        await this.presentSubPresets(preset, document.sections);
-        return;
-      }
-    }
-
-    this.navigateToPreset(preset, sectionId);
-  }
-
-  private async presentSubPresets(
-    preset: PrayerPresetSummary,
-    sections: PrayerSectionDocument[],
-  ): Promise<void> {
-    if (!sections.length) {
-      this.navigateToPreset(preset);
-      return;
-    }
-
-    const actionSheet = await this.actionSheetController.create({
-      cssClass: 'home-prayer-sheet',
-      buttons: [
-        ...sections.map((section) => this.toActionSheetButton(preset, section)),
-      ],
-    });
-
-    await actionSheet.present();
+    const document = await this.prayerContentService.getPrayerDocument(preset.assetPath);
+    const firstSection = document.sections[0];
+    this.navigateToPreset(preset, firstSection?.id, document.sections.length > 1);
   }
 
   trackByPreset(index: number, preset: PrayerPresetSummary): string {
@@ -125,21 +97,13 @@ export class HomePage implements OnInit {
   private navigateToPreset(
     preset: PrayerPresetSummary,
     sectionId?: string,
+    openSectionMenu = false,
   ): void {
     void this.router.navigate(['/reader', preset.id], {
-      queryParams: sectionId ? { section: sectionId } : {},
-    });
-  }
-
-  private toActionSheetButton(
-    preset: PrayerPresetSummary,
-    section: PrayerSectionDocument,
-  ): ActionSheetButton {
-    return {
-      text: section.title,
-      handler: () => {
-        this.navigateToPreset(preset, section.id);
+      queryParams: {
+        ...(sectionId ? { section: sectionId } : {}),
+        ...(openSectionMenu ? { openSectionMenu: true } : {}),
       },
-    };
+    });
   }
 }

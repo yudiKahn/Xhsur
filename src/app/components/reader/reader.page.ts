@@ -101,7 +101,11 @@ export class ReaderPage implements OnInit, AfterViewInit {
     combineLatest([this.activatedRoute.paramMap, this.activatedRoute.queryParamMap])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([paramMap, queryParamMap]) => {
-        void this.loadReaderContent(paramMap.get('presetId'), queryParamMap.get('section'));
+        void this.loadReaderContent(
+          paramMap.get('presetId'),
+          queryParamMap.get('section'),
+          queryParamMap.get('openSectionMenu') === 'true',
+        );
       });
   }
 
@@ -217,6 +221,7 @@ export class ReaderPage implements OnInit, AfterViewInit {
   private async loadReaderContent(
     presetId: string | null,
     requestedSectionId: string | null,
+    openSectionMenu = false,
   ): Promise<void> {
     this.isLoading.set(true);
     this.loadError.set(null);
@@ -240,6 +245,9 @@ export class ReaderPage implements OnInit, AfterViewInit {
         swiper?.update();
         swiper?.slideTo(this.activeSectionIndex(), 0, false);
         this.scrollSectionToTop(this.activeSectionIndex());
+        if (openSectionMenu && document.sections.length > 1) {
+          void this.sectionPopover?.present();
+        }
       });
     } catch {
       this.prayerTitle.set('');
