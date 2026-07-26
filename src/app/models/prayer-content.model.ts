@@ -10,6 +10,7 @@ export interface PrayerTextSegment {
 export interface PrayerBlock {
   type: PrayerBlockType;
   text: string;
+  size?: 'small';
   segments?: PrayerTextSegment[];
   marker?: string;
   level?: 1 | 2 | 3 | 4 | 5 | 6;

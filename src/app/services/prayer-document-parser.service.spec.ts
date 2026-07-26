@@ -72,6 +72,61 @@ describe('PrayerDocumentParserService', () => {
     ]);
   });
 
+  it('keeps comments and following text ordered and small inside @small', () => {
+    const document = parser.parseMarkdownDocument([
+      '# תפילה',
+      'טקסט רגיל',
+      '@small',
+      '> הערה קטנה',
+      'טקסט קטן',
+      '@endsmall',
+    ].join('\n'), 'test');
+
+    const blocks = document.sections[0].blocks;
+    expect(blocks).toHaveSize(4);
+    expect(blocks[1].text).toBe('טקסט רגיל');
+    expect(blocks[2]).toEqual(jasmine.objectContaining({
+      type: 'comment',
+      text: 'הערה קטנה',
+      size: 'small',
+    }));
+    expect(blocks[3]).toEqual(jasmine.objectContaining({
+      type: 'paragraph',
+      text: 'טקסט קטן',
+      size: 'small',
+      segments: [{ text: 'טקסט קטן', size: 'small' }],
+    }));
+  });
+
+  it('supports a standalone @small block at the start of a section', () => {
+    const document = parser.parseMarkdownDocument([
+      '# תפילה',
+      '@small',
+      'טקסט קטן ראשון',
+      'טקסט קטן שני',
+      '@endsmall',
+      'טקסט רגיל',
+    ].join('\n'), 'test');
+
+    const blocks = document.sections[0].blocks;
+    expect(blocks).toHaveSize(4);
+    expect(blocks[1]).toEqual(jasmine.objectContaining({
+      type: 'paragraph',
+      text: 'טקסט קטן ראשון',
+      size: 'small',
+    }));
+    expect(blocks[2]).toEqual(jasmine.objectContaining({
+      type: 'paragraph',
+      text: 'טקסט קטן שני',
+      size: 'small',
+    }));
+    expect(blocks[3]).toEqual(jasmine.objectContaining({
+      type: 'paragraph',
+      text: 'טקסט רגיל',
+      size: undefined,
+    }));
+  });
+
   it('rejects invalid small text blocks', () => {
     expect(() => parser.parseMarkdownDocument(
       '# תפילה\nטקסט רגיל\n@small\nטקסט קטן',
@@ -81,10 +136,6 @@ describe('PrayerDocumentParserService', () => {
       '# תפילה\n@endsmall',
       'test',
     )).toThrowError(/Unexpected @endsmall/);
-    expect(() => parser.parseMarkdownDocument(
-      '# תפילה\n@small\nטקסט קטן\n@endsmall',
-      'test',
-    )).toThrowError(/must follow paragraph text/);
   });
 
   it('rejects content without a prayer title and unclosed conditions', () => {

@@ -206,6 +206,14 @@ export class ReaderPage implements OnInit, AfterViewInit {
     return `${block.type}:${block.level ?? 0}:${index}`;
   }
 
+  firstWord(text: string): string {
+    return /^\S+/u.exec(text)?.[0] ?? text;
+  }
+
+  textAfterFirstWord(text: string): string {
+    return text.slice(this.firstWord(text).length);
+  }
+
   private async loadReaderContent(
     presetId: string | null,
     requestedSectionId: string | null,

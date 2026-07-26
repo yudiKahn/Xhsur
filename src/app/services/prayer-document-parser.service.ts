@@ -76,11 +76,12 @@ export class PrayerDocumentParserService {
         if (isSmallText) throw new Error(`Nested @small at line ${lineNumber}.`);
         flushPendingMarker();
         const previousBlock = currentSection.blocks[currentSection.blocks.length - 1];
-        if (previousBlock?.type !== 'paragraph') {
-          throw new Error(`@small must follow paragraph text at line ${lineNumber}.`);
+        if (previousBlock?.type === 'paragraph') {
+          previousBlock.segments ??= [{ text: previousBlock.text }];
+          inlineParagraph = previousBlock;
+        } else {
+          inlineParagraph = undefined;
         }
-        previousBlock.segments ??= [{ text: previousBlock.text }];
-        inlineParagraph = previousBlock;
         appendAfterSmallText = false;
         isSmallText = true;
         return;
@@ -89,7 +90,7 @@ export class PrayerDocumentParserService {
         if (!isSmallText) throw new Error(`Unexpected @endsmall at line ${lineNumber}.`);
         flushPendingMarker();
         isSmallText = false;
-        appendAfterSmallText = true;
+        appendAfterSmallText = !!inlineParagraph;
         return;
       }
 
@@ -152,17 +153,22 @@ export class PrayerDocumentParserService {
       }
 
       if (line.startsWith('>')) {
-        if (isSmallText) throw new Error(`Comment inside @small block at line ${lineNumber}.`);
-        finishInlineParagraph();
         const text = line.slice(1).trim();
         if (!text) throw new Error(`Empty comment block at line ${lineNumber}.`);
+        finishInlineParagraph();
         const conditions = this.cloneConditions(conditionStack);
         if (this.isInlineMarker(text)) {
           flushPendingMarker();
           pendingInlineMarker = { text, conditions };
           return;
         }
-        this.pushBlock(currentSection, { type: 'comment', text, level: 6, conditions }, pendingInlineMarker);
+        this.pushBlock(currentSection, {
+          type: 'comment',
+          text,
+          size: isSmallText ? 'small' : undefined,
+          level: 6,
+          conditions,
+        }, pendingInlineMarker);
         pendingInlineMarker = undefined;
         return;
       }
@@ -176,6 +182,8 @@ export class PrayerDocumentParserService {
       this.pushBlock(currentSection, {
         type: 'paragraph',
         text: line,
+        size: isSmallText ? 'small' : undefined,
+        segments: isSmallText ? [{ text: line, size: 'small' }] : undefined,
         conditions: this.cloneConditions(conditionStack),
       }, pendingInlineMarker);
       pendingInlineMarker = undefined;

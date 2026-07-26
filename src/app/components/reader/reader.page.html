@@ -100,7 +100,7 @@
                     <!--Do nothing-->
                   }
                   @case ('comment') {
-                    <aside class="siddur-note">
+                    <aside class="siddur-note" [class.siddur-small-text]="block.size === 'small'">
                       @if (block.marker) {
                         <span class="siddur-inline-marker">{{ block.marker }}</span>
                       }
@@ -113,11 +113,17 @@
                         <span class="siddur-inline-marker">{{ block.marker }}</span>
                       }
                       @if (block.segments?.length) {
-                        @for (segment of block.segments; track $index) {
-                          <span [class.siddur-small-text]="segment.size === 'small'">{{ segment.text }}</span>
+                        @for (segment of block.segments; track $index; let isFirst = $first) {
+                          <span [class.siddur-small-text]="segment.size === 'small'">
+                            @if (isFirst) {
+                              <span class="font-bold">{{ firstWord(segment.text) }}</span>{{ textAfterFirstWord(segment.text) }}
+                            } @else {
+                              {{ segment.text }}
+                            }
+                          </span>
                         }
                       } @else {
-                        {{ block.text }}
+                        <span class="font-bold">{{ firstWord(block.text) }}</span>{{ textAfterFirstWord(block.text) }}
                       }
                     </p>
                   }
