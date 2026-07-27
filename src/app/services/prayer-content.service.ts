@@ -56,6 +56,13 @@ export class PrayerContentService {
         case 'show-hallel-any': return flags.hallel !== 'none';
         case 'show-hallel-full': return flags.hallel === 'full';
         case 'show-hallel-partial': return flags.hallel === 'partial';
+        case 'IsSunday': return flags.IsSunday;
+        case 'IsMonday': return flags.IsMonday;
+        case 'IsTuesday': return flags.IsTuesday;
+        case 'IsWednesday': return flags.IsWednesday;
+        case 'IsThursday': return flags.IsThursday;
+        case 'IsFriday': return flags.IsFriday;
+        case 'IsSaturday': return flags.IsSaturday;
         default: return true;
       }
     });
