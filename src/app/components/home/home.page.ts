@@ -14,7 +14,12 @@ import {
   IonLabel,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
-import { menu, informationCircleOutline } from 'ionicons/icons';
+import {
+  informationCircleOutline,
+  menu,
+  refreshOutline,
+  settingsOutline,
+} from 'ionicons/icons';
 import { PrayerPresetSummary } from '../../models/prayer-preset.model';
 import { PrayerContentService } from '../../services/prayer-content.service';
 import { JewishCalendarService } from '../../services/jewish-calendar.service';
@@ -54,6 +59,8 @@ export class HomePage implements OnInit {
     addIcons({
       'information-circle-outline': informationCircleOutline,
       'menu': menu,
+      'refresh-outline': refreshOutline,
+      'settings-outline': settingsOutline,
     });
   }
 
@@ -105,5 +112,19 @@ export class HomePage implements OnInit {
         ...(openSectionMenu ? { openSectionMenu: true } : {}),
       },
     });
+  }
+
+  async refreshApp(): Promise<void> {
+    if ('caches' in window) {
+      const cacheNames = await window.caches.keys();
+      await Promise.all(cacheNames.map((cacheName) => window.caches.delete(cacheName)));
+    }
+
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+
+    window.location.reload();
   }
 }

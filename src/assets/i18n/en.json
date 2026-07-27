@@ -9,12 +9,17 @@
   "common": {
     "actions": {
       "back": "Back",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "refresh": "Refresh"
     }
   },
   "home": {
     "choosePrayer": "Choose a prayer",
     "additionalPrayers": "Additional prayers"
+  },
+  "settings": {
+    "title": "Settings",
+    "version": "Version {{version}}"
   },
   "about": {
     "title": "About",

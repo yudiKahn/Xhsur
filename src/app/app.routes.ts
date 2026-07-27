@@ -17,6 +17,11 @@ export const appRoutes: Routes = [
       import('./components/about/about.page').then((component) => component.AboutPage),
   },
   {
+    path: 'settings',
+    loadComponent: () =>
+      import('./components/settings/settings.page').then((component) => component.SettingsPage),
+  },
+  {
     path: '',
     redirectTo: 'home',
     pathMatch: 'full',

@@ -1,0 +1,13 @@
+.settings-layout {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.settings-version {
+  margin-top: auto;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  color: var(--app-color-muted);
+  text-align: center;
+}

@@ -9,12 +9,17 @@
   "common": {
     "actions": {
       "back": "חזרה",
-      "cancel": "ביטול"
+      "cancel": "ביטול",
+      "refresh": "רענון"
     }
   },
   "home": {
     "choosePrayer": "בחרו תפילה",
     "additionalPrayers": "תפילות נוספות"
+  },
+  "settings": {
+    "title": "הגדרות",
+    "version": "גרסה {{version}}"
   },
   "about": {
     "title": "אודות",

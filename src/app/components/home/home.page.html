@@ -14,9 +14,17 @@
 <ion-popover #aboutPopover trigger="home-menu-trigger" triggerAction="click" side="bottom" alignment="end">
   <ng-template>
     <ion-list class="home-menu-list">
+      <ion-item button routerLink="/settings" (click)="aboutPopover.dismiss()">
+        <ion-icon slot="start" name="settings-outline"></ion-icon>
+        <ion-label>{{ 'settings.title' | translate }}</ion-label>
+      </ion-item>
       <ion-item button routerLink="/about" (click)="aboutPopover.dismiss()">
         <ion-icon slot="start" name="information-circle-outline"></ion-icon>
         <ion-label>{{ 'about.title' | translate }}</ion-label>
+      </ion-item>
+      <ion-item button (click)="aboutPopover.dismiss(); refreshApp()">
+        <ion-icon slot="start" name="refresh-outline"></ion-icon>
+        <ion-label>{{ 'common.actions.refresh' | translate }}</ion-label>
       </ion-item>
     </ion-list>
   </ng-template>
