@@ -25,7 +25,7 @@
   box-sizing: border-box;
   width: min(100%, 680px);
   min-height: 100%;
-  margin: 0 auto;
+  margin: 0 auto 50px auto;
   padding: calc(26px + env(safe-area-inset-top, 0px)) 22px calc(34px + env(safe-area-inset-bottom, 0px));
   position: relative;
   color: var(--home-ink);
