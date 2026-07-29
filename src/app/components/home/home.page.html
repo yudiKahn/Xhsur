@@ -6,7 +6,15 @@
       </ion-button>
     </ion-buttons>
     <ion-buttons slot="end">
-      <div class="home-toolbar__day">{{ currentDayLabel }}</div>
+      <button
+        id="home-zmanim-trigger"
+        class="home-toolbar__day"
+        type="button"
+        [attr.aria-label]="'home.zmanim.open' | translate"
+        (click)="loadZmanim()"
+      >
+        {{ currentDayLabel }}
+      </button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
@@ -27,6 +35,49 @@
         <ion-label>{{ 'common.actions.refresh' | translate }}</ion-label>
       </ion-item>
     </ion-list>
+  </ng-template>
+</ion-popover>
+
+<ion-popover
+  trigger="home-zmanim-trigger"
+  triggerAction="click"
+  side="bottom"
+  alignment="end"
+>
+  <ng-template>
+    <section class="home-zmanim" [attr.aria-label]="'home.zmanim.title' | translate">
+      <h2>{{ 'home.zmanim.title' | translate }}</h2>
+
+      @if (isLoadingZmanim) {
+        <div class="home-zmanim__state">
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>{{ 'home.zmanim.loading' | translate }}</span>
+        </div>
+      } @else if (zmanimError()) {
+        <p class="home-zmanim__state home-zmanim__error">
+          {{ 'home.zmanim.locationUnavailable' | translate }}
+        </p>
+      } @else if (zmanim(); as times) {
+        <dl class="home-zmanim__list">
+          <div>
+            <dt>{{ 'home.zmanim.alos' | translate }}</dt>
+            <dd>{{ times.alos ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'home.zmanim.sunrise' | translate }}</dt>
+            <dd>{{ times.sunrise ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'home.zmanim.sunset' | translate }}</dt>
+            <dd>{{ times.sunset ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'home.zmanim.tzais' | translate }}</dt>
+            <dd>{{ times.tzais ?? '—' }}</dd>
+          </div>
+        </dl>
+      }
+    </section>
   </ng-template>
 </ion-popover>
 

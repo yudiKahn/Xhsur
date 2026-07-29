@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { addIcons } from 'ionicons';
 import {
@@ -12,6 +12,7 @@ import {
   IonList,
   IonItem,
   IonLabel,
+  IonSpinner,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -21,9 +22,12 @@ import {
   settingsOutline,
 } from 'ionicons/icons';
 import { PrayerPresetSummary } from '../../models/prayer-preset.model';
+import { DailyZmanim } from '../../models/daily-zmanim.model';
 import { PrayerContentService } from '../../services/prayer-content.service';
 import { JewishCalendarService } from '../../services/jewish-calendar.service';
+import { LocationService } from '../../services/location.service';
 import { PrayerPresetsService } from '../../services/prayer-presets.service';
+import { ZmanimService } from '../../services/zmanim.service';
 
 @Component({
   selector: 'app-home',
@@ -41,17 +45,22 @@ import { PrayerPresetsService } from '../../services/prayer-presets.service';
     IonList,
     IonItem,
     IonLabel,
+    IonSpinner,
     RouterLink,
     TranslatePipe,
   ],
 })
 export class HomePage implements OnInit {
   readonly currentDayLabel = inject(JewishCalendarService).getCurrentDayLabel();
+  readonly zmanim = signal<DailyZmanim | null>(null);
+  readonly zmanimError = signal(false);
   presets: PrayerPresetSummary[] = [];
   primaryPresets: PrayerPresetSummary[] = [];
   supplementalPresets: PrayerPresetSummary[] = [];
   private readonly prayerContentService = inject(PrayerContentService);
   private readonly prayerPresetsService = inject(PrayerPresetsService);
+  private readonly locationService = inject(LocationService);
+  private readonly zmanimService = inject(ZmanimService);
   private readonly router = inject(Router);
   private readonly primaryPresetIds = new Set(['shacharit', 'mincha', 'maariv']);
 
@@ -80,6 +89,23 @@ export class HomePage implements OnInit {
 
   trackByPreset(index: number, preset: PrayerPresetSummary): string {
     return preset.id;
+  }
+
+  async loadZmanim(): Promise<void> {
+    this.zmanimError.set(false);
+    const location = this.locationService.currentLocation()
+      ?? await this.locationService.loadCurrentLocation();
+
+    if (!location) {
+      this.zmanimError.set(true);
+      return;
+    }
+
+    this.zmanim.set(this.zmanimService.calculate(location));
+  }
+
+  get isLoadingZmanim(): boolean {
+    return this.locationService.isLoading();
   }
 
   getPresetIcon(presetId: string): string {

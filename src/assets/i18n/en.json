@@ -15,7 +15,17 @@
   },
   "home": {
     "choosePrayer": "Choose a prayer",
-    "additionalPrayers": "Additional prayers"
+    "additionalPrayers": "Additional prayers",
+    "zmanim": {
+      "title": "Daily zmanim",
+      "open": "Show daily zmanim",
+      "loading": "Finding your location…",
+      "locationUnavailable": "Your location is unavailable. Allow location access in your device settings.",
+      "alos": "Dawn",
+      "sunrise": "Sunrise",
+      "sunset": "Sunset",
+      "tzais": "Nightfall"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -33,6 +43,14 @@
     "keepScreenOn": {
       "title": "Keep screen on",
       "description": "Prevent the screen from dimming while the app is open."
+    },
+    "location": {
+      "title": "Zmanim location",
+      "current": "Current location",
+      "description": "Location is used to calculate zmanim. Manual location selection will be supported later.",
+      "useCurrent": "Use current location",
+      "loading": "Finding location…",
+      "unavailable": "Location is unavailable. Check the location permission."
     },
     "version": "Version {{version}}"
   },

@@ -57,7 +57,6 @@ body {
   background: var(--app-color-background);
   color: var(--app-color-secondary);
   font-family: "Drugulin CLM", "Times New Roman", serif;
-  font-synthesis: none;
 }
 
 body {
@@ -208,8 +207,6 @@ select {
 
 .siddur-text-body {
   font-family: "Yiddishkeit AlefAlefAlef", "Drugulin CLM", "Times New Roman", serif;
-  font-weight: 700;
-  font-synthesis: none;
   font-size: 1.16rem;
   line-height: 1.85;
   color: #000;
@@ -281,4 +278,53 @@ select {
 
 .siddur-small-text {
   font-size: 0.82em;
+}
+
+.home-zmanim {
+  padding: 1rem 1.1rem;
+  color: var(--app-color-secondary);
+}
+
+.home-zmanim h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  text-align: center;
+}
+
+.home-zmanim__list {
+  margin: 0;
+}
+
+.home-zmanim__list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid rgba(var(--app-color-primary-rgb), 0.18);
+}
+
+.home-zmanim__list dt,
+.home-zmanim__list dd {
+  margin: 0;
+}
+
+.home-zmanim__list dd {
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  direction: ltr;
+}
+
+.home-zmanim__state {
+  display: flex;
+  min-height: 90px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0;
+  text-align: center;
+}
+
+.home-zmanim__error {
+  max-width: 280px;
+  color: var(--app-color-muted);
 }

@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import {
   IonBackButton,
+  IonButton,
   IonButtons,
   IonContent,
   IonHeader,
@@ -21,6 +21,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import packageJson from '../../../../package.json';
 import { AppTheme, READER_FONT_SCALE_MAX, READER_FONT_SCALE_MIN, READER_FONT_SCALE_STEP } from '../../models/app-settings.model';
 import { AppSettingsService } from '../../services/app-settings.service';
+import { LocationService } from '../../services/location.service';
 
 @Component({
   selector: 'app-settings',
@@ -29,6 +30,7 @@ import { AppSettingsService } from '../../services/app-settings.service';
   standalone: true,
   imports: [
     IonBackButton,
+    IonButton,
     IonButtons,
     IonContent,
     IonHeader,
@@ -47,6 +49,7 @@ import { AppSettingsService } from '../../services/app-settings.service';
 export class SettingsPage {
   readonly version = packageJson.version;
   readonly settings = inject(AppSettingsService);
+  readonly location = inject(LocationService);
   readonly minimumFontScale = READER_FONT_SCALE_MIN;
   readonly maximumFontScale = READER_FONT_SCALE_MAX;
   readonly fontScaleStep = READER_FONT_SCALE_STEP;
@@ -69,5 +72,9 @@ export class SettingsPage {
     const succeeded = await this.settings.setKeepScreenOn(event.detail.checked);
     if (!succeeded) toggle.checked = this.settings.keepScreenOn();
     toggle.disabled = !this.settings.keepAwakeSupported();
+  }
+
+  loadCurrentLocation(): void {
+    void this.location.loadCurrentLocation();
   }
 }

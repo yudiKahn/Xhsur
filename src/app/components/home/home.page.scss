@@ -214,12 +214,13 @@
 }
 
 .home-toolbar__day {
+  border: 0;
+  background: transparent;
   font-size: 1.15rem;
-  font-weight: 5  00;
+  font-weight: 500;
   color: var(--home-ink);
   padding-left: 16px;
   padding-right: 16px;
-
 }
 
 .home-toolbar__menu-btn {

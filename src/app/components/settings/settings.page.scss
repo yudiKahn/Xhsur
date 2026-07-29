@@ -67,6 +67,36 @@
   font-size: 1.7rem;
 }
 
+.settings-location {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.6rem;
+}
+
+.settings-location__timezone {
+  color: var(--app-color-secondary);
+  font-family: Arial, sans-serif;
+}
+
+.settings-location small,
+.settings-location__description,
+.settings-location__error {
+  color: var(--app-color-muted);
+}
+
+.settings-location__description {
+  margin: 0.5rem 0 0;
+}
+
+.settings-location__button {
+  align-self: flex-start;
+  margin-top: 0.65rem;
+}
+
+.settings-location__error {
+  margin-top: 0.4rem;
+}
+
 ion-toggle ion-note {
   display: block;
   margin-top: 0.2rem;

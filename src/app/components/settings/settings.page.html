@@ -60,6 +60,42 @@
           {{ 'settings.keepScreenOn.title' | translate }}
         </ion-toggle>
       </ion-item>
+
+      <ion-item class="settings-item settings-item--stacked">
+        <ion-label class="settings-item-heading">
+          {{ 'settings.location.title' | translate }}
+        </ion-label>
+
+        @if (location.currentLocation(); as currentLocation) {
+          <div class="settings-location">
+            <span class="settings-location__timezone" dir="ltr">
+              {{ currentLocation.timeZoneId }}
+            </span>
+          </div>
+        } @else {
+          <p class="settings-location__description">
+            {{ 'settings.location.description' | translate }}
+          </p>
+        }
+
+        <ion-button
+          class="settings-location__button"
+          fill="outline"
+          size="small"
+          [disabled]="location.isLoading()"
+          (click)="loadCurrentLocation()"
+        >
+          {{ (location.isLoading()
+            ? 'settings.location.loading'
+            : 'settings.location.useCurrent') | translate }}
+        </ion-button>
+
+        @if (location.error()) {
+          <small class="settings-location__error">
+            {{ 'settings.location.unavailable' | translate }}
+          </small>
+        }
+      </ion-item>
     </ion-list>
 
     <small class="settings-version">
