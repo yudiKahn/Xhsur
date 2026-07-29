@@ -30,6 +30,8 @@ import { combineLatest } from 'rxjs';
 import { PrayerBlock, PrayerSectionDocument } from '../../models/prayer-content.model';
 import { PrayerContentService } from '../../services/prayer-content.service';
 import { PrayerPresetsService } from '../../services/prayer-presets.service';
+import { AppSettingsService } from '../../services/app-settings.service';
+import { READER_FONT_SCALE_MAX, READER_FONT_SCALE_MIN } from '../../models/app-settings.model';
 import { addIcons } from 'ionicons';
 import { chevronBackOutline } from 'ionicons/icons';
 
@@ -64,7 +66,8 @@ type SwiperElement = HTMLElement & {
 export class ReaderPage implements OnInit, AfterViewInit {
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
-  readonly readerFontScale = signal(1);
+  readonly appSettings = inject(AppSettingsService);
+  readonly readerFontScale = this.appSettings.readerFontScale;
   readonly prayerTitle = signal('');
   readonly sections = signal<PrayerSectionDocument[]>([]);
   readonly activeSectionIndex = signal(0);
@@ -84,8 +87,6 @@ export class ReaderPage implements OnInit, AfterViewInit {
   private readonly presetsService = inject(PrayerPresetsService);
   private readonly router = inject(Router);
 
-  private readonly minimumFontScale = 0.8;
-  private readonly maximumFontScale = 1.6;
   private pinchStartDistance: number | null = null;
   private pinchStartFontScale = 1;
 
@@ -158,13 +159,13 @@ export class ReaderPage implements OnInit, AfterViewInit {
     // Calculate next scale
     const scaleChange = this.getTouchDistance(event.touches) / this.pinchStartDistance;
     const nextScale = this.pinchStartFontScale * scaleChange;
-    const clampedScale = Math.min(this.maximumFontScale, Math.max(this.minimumFontScale, nextScale));
+    const clampedScale = Math.min(READER_FONT_SCALE_MAX, Math.max(READER_FONT_SCALE_MIN, nextScale));
 
     // Update styling synchronously on the element to avoid lag/jumps
     container.style.setProperty('--reader-font-scale', clampedScale.toString());
 
     // Update the signal so Angular state is synced
-    this.readerFontScale.set(clampedScale);
+    this.appSettings.setReaderFontScale(clampedScale);
 
     // Read the new scroll height after style change (synchronous layout reflow)
     const scrollHeightAfter = container.scrollHeight;

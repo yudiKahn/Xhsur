@@ -5,6 +5,74 @@
   padding: 1rem;
 }
 
+.settings-list {
+  width: min(100%, 680px);
+  margin: 0 auto;
+  padding: 0;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.settings-item {
+  --padding-start: 1rem;
+  --inner-padding-end: 1rem;
+  --min-height: 68px;
+}
+
+.settings-item--stacked {
+  --padding-top: 0.9rem;
+  --padding-bottom: 0.9rem;
+}
+
+.settings-item--stacked::part(native),
+.settings-item--stacked::part(detail-icon) {
+  align-items: stretch;
+}
+
+.settings-item--stacked::part(native) {
+  flex-direction: column;
+}
+
+.settings-item-heading {
+  width: 100%;
+}
+
+.settings-item--stacked ion-segment,
+.settings-item--stacked ion-range {
+  width: 100%;
+}
+
+.settings-theme-segment {
+  margin-top: 0.75rem;
+}
+
+.settings-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-font-preview {
+  color: var(--app-color-secondary);
+  font-family: "Drugulin CLM", "Yiddishkeit AlefAlefAlef", "Times New Roman", serif;
+  font-size: calc(1.2rem * var(--reader-font-scale, 1));
+  font-weight: 700;
+}
+
+.settings-font-preview--small {
+  font-size: 1rem;
+}
+
+.settings-font-preview--large {
+  font-size: 1.7rem;
+}
+
+ion-toggle ion-note {
+  display: block;
+  margin-top: 0.2rem;
+  white-space: normal;
+}
+
 .settings-version {
   margin-top: auto;
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));

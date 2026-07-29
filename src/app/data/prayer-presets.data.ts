@@ -37,4 +37,10 @@ export const PRAYER_PRESETS: PrayerPresetDefinition[] = [
     order: 5,
     assetPath: 'assets/siddur/kryat-shema.md',
   },
+  {
+    id: 'havdala',
+    titleKey: 'presets.havdala.title',
+    order: 6,
+    assetPath: 'assets/siddur/havdala.md',
+  },
 ];

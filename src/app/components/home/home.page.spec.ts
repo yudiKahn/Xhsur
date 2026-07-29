@@ -39,7 +39,13 @@ describe('HomePage', () => {
 
   it('shows only prayers backed by Markdown files', () => {
     expect(component.presets.map((preset) => preset.id)).toEqual([
-      'shacharit', 'mincha', 'birkat-hamazon', 'tefilat-haderech', 'maariv',
+      'shacharit',
+      'mincha',
+      'birkat-hamazon',
+      'tefilat-haderech',
+      'maariv',
+      'kryat-shema',
+      'havdala',
     ]);
   });
 

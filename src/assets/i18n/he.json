@@ -19,6 +19,21 @@
   },
   "settings": {
     "title": "הגדרות",
+    "appearance": "מראה",
+    "theme": {
+      "title": "ערכת נושא",
+      "light": "בהיר",
+      "dark": "כהה",
+      "system": "מערכת"
+    },
+    "fontSize": {
+      "title": "גודל טקסט התפילה",
+      "description": "הגדרה זו מסונכרנת גם עם צביטה להגדלה במסך הקריאה."
+    },
+    "keepScreenOn": {
+      "title": "השארת המסך דולק",
+      "description": "מונע מהמסך להתעמעם בזמן שהאפליקציה פתוחה."
+    },
     "version": "גרסה {{version}}"
   },
   "about": {
@@ -89,6 +104,9 @@
       "sections": {
         "main": "קריאת שמע שעל המיטה"
       }
+    },
+    "havdala": {
+      "title": "מוצאי שבת"
     },
     "shared": {
       "sections": {

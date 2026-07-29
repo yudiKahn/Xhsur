@@ -3,6 +3,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 import { TranslateService } from '@ngx-translate/core';
 import { register } from 'swiper/element/bundle';
+import { AppSettingsService } from './services/app-settings.service';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +18,7 @@ export class AppComponent {
   private readonly translateService = inject(TranslateService);
 
   constructor() {
+    inject(AppSettingsService);
     register();
     this.title.setTitle(this.translateService.instant('app.title'));
     this.meta.updateTag({

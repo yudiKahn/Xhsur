@@ -16,12 +16,15 @@ describe('PrayerPresetsService', () => {
       'birkat-hamazon',
       'tefilat-haderech',
       'maariv',
+      'kryat-shema',
+      'havdala',
     ]);
     expect(service.getAll().every((preset) => preset.assetPath.endsWith('.md'))).toBeTrue();
   });
 
   it('finds a prayer by route id', () => {
     expect(service.getById('shacharit')?.assetPath).toBe('assets/siddur/shacharit.md');
+    expect(service.getById('havdala')?.assetPath).toBe('assets/siddur/havdala.md');
     expect(service.getById('missing')).toBeUndefined();
   });
 });

@@ -9,6 +9,60 @@
 
 <ion-content [fullscreen]="true">
   <main class="settings-layout">
+    <ion-list class="settings-list" lines="full">
+      <ion-item class="settings-item settings-item--stacked">
+        <ion-label class="settings-item-heading">{{ 'settings.theme.title' | translate }}</ion-label>
+        <ion-segment mode="ios"
+          class="settings-theme-segment"
+          [value]="settings.theme()"
+          (ionChange)="setTheme($event)"
+        >
+          <ion-segment-button value="light">
+            <ion-label>{{ 'settings.theme.light' | translate }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="dark">
+            <ion-label>{{ 'settings.theme.dark' | translate }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="system">
+            <ion-label>{{ 'settings.theme.system' | translate }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </ion-item>
+
+      <ion-item class="settings-item settings-item--stacked">
+        <div class="settings-label-row">
+          <ion-label>{{ 'settings.fontSize.title' | translate }}</ion-label>
+        </div>
+        <ion-range
+          [min]="minimumFontScale"
+          [max]="maximumFontScale"
+          [step]="fontScaleStep"
+          [value]="settings.readerFontScale()"
+          [ariaLabel]="'settings.fontSize.title' | translate"
+          (ionInput)="setFontScale($event)"
+        >
+          <span
+            slot="end"
+            class="settings-font-preview"
+            [style.--reader-font-scale]="settings.readerFontScale()"
+          >א</span>
+        </ion-range>
+      </ion-item>
+
+      <ion-item class="settings-item">
+        <ion-toggle
+          mode="ios"
+          justify="space-between"
+          [checked]="settings.keepScreenOn()"
+          [disabled]="!settings.keepAwakeSupported()"
+          (ionChange)="setKeepScreenOn($event)"
+        >
+          {{ 'settings.keepScreenOn.title' | translate }}
+          <ion-note>{{ 'settings.keepScreenOn.description' | translate }}</ion-note>
+        </ion-toggle>
+      </ion-item>
+    </ion-list>
+
     <small class="settings-version">
       {{ 'settings.version' | translate: { version } }}
     </small>

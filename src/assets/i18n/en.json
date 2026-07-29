@@ -19,6 +19,21 @@
   },
   "settings": {
     "title": "Settings",
+    "appearance": "Appearance",
+    "theme": {
+      "title": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "fontSize": {
+      "title": "Prayer text size",
+      "description": "This also stays in sync with pinch-to-zoom in the reader."
+    },
+    "keepScreenOn": {
+      "title": "Keep screen on",
+      "description": "Prevent the screen from dimming while the app is open."
+    },
     "version": "Version {{version}}"
   },
   "about": {
@@ -89,6 +104,9 @@
       "sections": {
         "main": "Kriat Shema Al Hamita"
       }
+    },
+    "havdala": {
+      "title": "Motzaei Shabbat"
     },
     "shared": {
       "sections": {

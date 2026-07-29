@@ -59,3 +59,16 @@
   --ion-color-step-900: #45372f;
   --ion-color-step-950: #3b312b;
 }
+
+:root.app-dark-theme {
+  --app-color-primary: #d2b879;
+  --app-color-primary-rgb: 210, 184, 121;
+  --app-color-secondary: #f1ece3;
+  --app-color-secondary-rgb: 241, 236, 227;
+  --app-color-background: #161513;
+  --app-color-background-rgb: 22, 21, 19;
+  --app-color-surface: #24211d;
+  --app-color-surface-rgb: 36, 33, 29;
+  --app-color-muted: #aaa39a;
+  --app-color-muted-rgb: 170, 163, 154;
+}

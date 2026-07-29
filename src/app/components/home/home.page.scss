@@ -5,7 +5,7 @@
   --home-muted: var(--app-color-muted);
   display: block;
   min-height: 100%;
-  color-scheme: light;
+  color-scheme: inherit;
   background: var(--home-background);
 }
 
@@ -118,7 +118,7 @@
   border: 1px solid rgba(var(--app-color-secondary-rgb), 0.025);
   border-radius: 20px;
   color: var(--home-ink);
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(var(--app-color-surface-rgb), 0.96);
   box-shadow: 0 8px 24px rgba(var(--app-color-secondary-rgb), 0.08);
   text-align: start;
   cursor: pointer;
@@ -207,7 +207,7 @@
 }
 
 .home-toolbar {
-  --background: #ffffff;
+  --background: var(--app-color-surface);
   --border-width: 0;
   --color: var(--home-ink);
   --min-height: 64px;
@@ -231,7 +231,7 @@
 }
 
 .home-menu-list {
-  --background: #ffffff;
+  --background: var(--app-color-surface);
   margin: 0;
   padding: 0;
 }

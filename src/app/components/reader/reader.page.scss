@@ -3,7 +3,7 @@
 }
 
 .reader-toolbar {
-  --background: #ffffff;
+  --background: var(--app-color-surface);
   --border-width: 0;
   --color: var(--app-color-secondary);
   --min-height: 72px;
@@ -164,7 +164,7 @@ ion-content.reader-content::part(scroll) {
   font-size: calc(1.2rem * var(--reader-font-scale, 1));
   line-height: 1.8;
   text-align: right;
-  background: #ffffff;
+  background: var(--app-color-surface);
   -webkit-overflow-scrolling: touch;
 }
 
