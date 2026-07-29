@@ -25,7 +25,13 @@ export class PrayerContentService {
         .filter((section) => this.conditionsMatch(section.conditions, flags))
         .map((section) => ({
           ...section,
-          blocks: section.blocks.filter((block) => this.conditionsMatch(block.conditions, flags)),
+          blocks: section.blocks
+            .filter((block) => this.conditionsMatch(block.conditions, flags))
+            .map((block) => ({
+              ...block,
+              segments: block.segments?.filter((segment) =>
+                this.conditionsMatch(segment.conditions, flags)),
+            })),
         }))
         .filter((section) => section.blocks.length > 0),
     };
@@ -51,20 +57,29 @@ export class PrayerContentService {
     flags: PrayerTimingFlags,
   ): boolean {
     return (conditions ?? []).every((ruleId) => {
-      switch (ruleId) {
-        case 'show-tachanun': return flags.tachanun;
-        case 'show-hallel-any': return flags.hallel !== 'none';
-        case 'show-hallel-full': return flags.hallel === 'full';
-        case 'show-hallel-partial': return flags.hallel === 'partial';
-        case 'IsSunday': return flags.IsSunday;
-        case 'IsMonday': return flags.IsMonday;
-        case 'IsTuesday': return flags.IsTuesday;
-        case 'IsWednesday': return flags.IsWednesday;
-        case 'IsThursday': return flags.IsThursday;
-        case 'IsFriday': return flags.IsFriday;
-        case 'IsSaturday': return flags.IsSaturday;
+      const isNegated = ruleId.startsWith('!');
+      const ruleName = isNegated ? ruleId.slice(1) : ruleId;
+      let matches: boolean;
+
+      switch (ruleName) {
+        case 'show-tachanun': matches = flags.tachanun; break;
+        case 'show-hallel-any': matches = flags.hallel !== 'none'; break;
+        case 'show-hallel-full': matches = flags.hallel === 'full'; break;
+        case 'show-hallel-partial': matches = flags.hallel === 'partial'; break;
+        case 'IsSummer': matches = flags.IsSummer; break;
+        case 'IsWinter': matches = flags.IsWinter; break;
+        case 'IsWinter1': matches = flags.IsWinter1; break;
+        case 'IsWinter2': matches = flags.IsWinter2; break;
+        case 'IsSunday': matches = flags.IsSunday; break;
+        case 'IsMonday': matches = flags.IsMonday; break;
+        case 'IsTuesday': matches = flags.IsTuesday; break;
+        case 'IsWednesday': matches = flags.IsWednesday; break;
+        case 'IsThursday': matches = flags.IsThursday; break;
+        case 'IsFriday': matches = flags.IsFriday; break;
+        case 'IsSaturday': matches = flags.IsSaturday; break;
         default: return true;
       }
+      return isNegated ? !matches : matches;
     });
   }
 }

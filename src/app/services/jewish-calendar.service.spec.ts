@@ -26,12 +26,44 @@ describe('JewishCalendarService', () => {
   });
 
   it('does not say Tachanon on Rosh Chodesh, during Nisan, or during Tishrei', () => {
-    expect(service.isTachanonOn(new Date(2026, 7, 14, 12))).toBeFalse();
-    expect(service.isTachanonOn(new Date(2026, 2, 25, 12))).toBeFalse();
-    expect(service.isTachanonOn(new Date(2026, 8, 20, 12))).toBeFalse();
+    expect(service.showTachanun(new Date(2026, 7, 14, 12))).toBeFalse();
+    expect(service.showTachanun(new Date(2026, 2, 25, 12))).toBeFalse();
+    expect(service.showTachanun(new Date(2026, 8, 20, 12))).toBeFalse();
   });
 
   it('says Tachanon on a regular weekday', () => {
-    expect(service.isTachanonOn(new Date(2026, 6, 26, 12))).toBeTrue();
+    expect(service.showTachanun(new Date(2026, 6, 26, 12))).toBeTrue();
+  });
+
+  it('switches from summer to winter after 22 Tishrei', () => {
+    spyOn(service, 'getJewishDate').and.returnValues(
+      { dayOfWeek: 0, dayOfMonth: 22, monthName: 'תשרי' },
+      { dayOfWeek: 1, dayOfMonth: 23, monthName: 'תשרי' },
+      { dayOfWeek: 1, dayOfMonth: 23, monthName: 'תשרי' },
+    );
+
+    expect(service.isSummer()).toBeTrue();
+    expect(service.isSummer()).toBeFalse();
+    expect(service.isWinter1()).toBeTrue();
+  });
+
+  it('starts the second winter period after 7 Mar-Cheshvan', () => {
+    spyOn(service, 'getJewishDate').and.returnValues(
+      { dayOfWeek: 0, dayOfMonth: 7, monthName: 'מרחשוון' },
+      { dayOfWeek: 1, dayOfMonth: 8, monthName: 'מרחשוון' },
+    );
+
+    expect(service.isWinter2()).toBeFalse();
+    expect(service.isWinter2()).toBeTrue();
+  });
+
+  it('switches from winter to summer after 15 Nisan', () => {
+    spyOn(service, 'getJewishDate').and.returnValues(
+      { dayOfWeek: 0, dayOfMonth: 15, monthName: 'ניסן' },
+      { dayOfWeek: 1, dayOfMonth: 16, monthName: 'ניסן' },
+    );
+
+    expect(service.isWinter1()).toBeTrue();
+    expect(service.isSummer()).toBeTrue();
   });
 });

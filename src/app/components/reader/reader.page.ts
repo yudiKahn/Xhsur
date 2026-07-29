@@ -55,8 +55,6 @@ type SwiperElement = HTMLElement & {
     IonIcon,
     IonHeader,
     IonPopover,
-    IonRefresher,
-    IonRefresherContent,
     IonSpinner,
     IonToolbar,
     TranslatePipe,
@@ -245,9 +243,9 @@ export class ReaderPage implements OnInit, AfterViewInit {
         swiper?.update();
         swiper?.slideTo(this.activeSectionIndex(), 0, false);
         this.scrollSectionToTop(this.activeSectionIndex());
-        if (openSectionMenu && document.sections.length > 1) {
-          void this.sectionPopover?.present();
-        }
+        // if (openSectionMenu && document.sections.length > 1) {
+        //   void this.sectionPopover?.present();
+        // }
       });
     } catch {
       this.prayerTitle.set('');

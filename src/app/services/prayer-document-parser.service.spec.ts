@@ -142,4 +142,60 @@ describe('PrayerDocumentParserService', () => {
     expect(() => parser.parseMarkdownDocument('תוכן', 'test')).toThrow();
     expect(() => parser.parseMarkdownDocument('# תפילה\n@if show-tachanun\nתוכן', 'test')).toThrow();
   });
+
+  it('parses @if, @elsif, and @else as mutually exclusive branches', () => {
+    const document = parser.parseMarkdownDocument([
+      '# תפילה',
+      '@if IsSummer',
+      'קיץ',
+      '@elsif IsWinter1',
+      'חורף ראשון',
+      '@elsif IsWinter2',
+      'חורף שני',
+      '@else',
+      'אחר',
+      '@endif',
+    ].join('\n'), 'test');
+    const blocks = document.sections[0].blocks.slice(1);
+
+    expect(blocks.map((block) => block.conditions)).toEqual([
+      ['IsSummer'],
+      ['!IsSummer', 'IsWinter1'],
+      ['!IsSummer', '!IsWinter1', 'IsWinter2'],
+      ['!IsSummer', '!IsWinter1', '!IsWinter2'],
+    ]);
+  });
+
+  it('keeps conditional branches inside @small as segments of the surrounding paragraph', () => {
+    const document = parser.parseMarkdownDocument([
+      '# תפילה',
+      'לפני',
+      '@small',
+      '@if IsSummer',
+      'קיץ',
+      '@else',
+      'חורף',
+      '@endif',
+      '@endsmall',
+      'אחרי',
+    ].join('\n'), 'test');
+    const paragraph = document.sections[0].blocks[1];
+
+    expect(document.sections[0].blocks).toHaveSize(2);
+    expect(paragraph.segments).toEqual([
+      { text: 'לפני' },
+      { text: ' קיץ', size: 'small', conditions: ['IsSummer'] },
+      { text: ' חורף', size: 'small', conditions: ['!IsSummer'] },
+      { text: ' אחרי', size: undefined },
+    ]);
+  });
+
+  it('rejects malformed conditional branches', () => {
+    expect(() => parser.parseMarkdownDocument('# תפילה\n@else\nתוכן', 'test'))
+      .toThrowError(/Unexpected @else/);
+    expect(() => parser.parseMarkdownDocument(
+      '# תפילה\n@if IsSummer\nקיץ\n@else\nאחר\n@elsif IsWinter\nחורף\n@endif',
+      'test',
+    )).toThrowError(/@elsif after @else/);
+  });
 });

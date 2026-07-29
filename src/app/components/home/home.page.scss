@@ -108,9 +108,7 @@
 
 .prayer-card {
   width: 100%;
-  min-height: 112px;
-  // display: grid;
-  // grid-template-columns: 74px 1fr 32px;
+  min-height: 70px;
   display: flex;
   flex-direction: row;
   place-content: space-between;

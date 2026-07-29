@@ -5,6 +5,7 @@ export type PrayerBlockType = 'heading' | 'comment' | 'paragraph';
 export interface PrayerTextSegment {
   text: string;
   size?: 'small';
+  conditions?: PrayerConditionRuleId[];
 }
 
 export interface PrayerBlock {

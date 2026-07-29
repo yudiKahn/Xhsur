@@ -39,7 +39,7 @@
     url("/assets/fonts/drugulinclm-bold-webfont.ttf") format("truetype");
   font-style: normal;
   font-weight: 700;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {
@@ -49,7 +49,7 @@
     url("/assets/fonts/YiddishkeitAlefAlefAlef-Bold.otf") format("opentype");
   font-style: normal;
   font-weight: 700;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {
@@ -59,7 +59,7 @@
     url("/assets/fonts/drugulinclm-bolditalic-webfont.ttf") format("truetype");
   font-style: italic;
   font-weight: 700;
-  font-display: swap;
+  font-display: block;
 }
 
 html,
@@ -67,6 +67,7 @@ body {
   background: var(--app-color-background);
   color: var(--app-color-secondary);
   font-family: "Drugulin CLM", "Times New Roman", serif;
+  font-synthesis: none;
 }
 
 body {
@@ -217,6 +218,8 @@ select {
 
 .siddur-text-body {
   font-family: "Yiddishkeit AlefAlefAlef", "Drugulin CLM", "Times New Roman", serif;
+  font-weight: 700;
+  font-synthesis: none;
   font-size: 1.16rem;
   line-height: 1.85;
   color: #000;

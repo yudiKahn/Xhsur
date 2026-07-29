@@ -4,9 +4,19 @@ import {
   PrayerDocument,
   PrayerSectionDocument,
 } from '../models/prayer-content.model';
-import { PrayerConditionRuleId } from '../models/prayer-preset.model';
+import {
+  PrayerConditionRuleId,
+  PrayerConditionRuleName,
+} from '../models/prayer-preset.model';
 
 const INLINE_MARKER_PATTERN = /^[א-ת][א-ת״"'׳]{0,3}$/u;
+
+interface ConditionFrame {
+  parentConditions: PrayerConditionRuleId[];
+  previousRules: PrayerConditionRuleName[];
+  currentRule?: PrayerConditionRuleName;
+  hasElse: boolean;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -16,13 +26,23 @@ export class PrayerDocumentParserService {
     const sections: PrayerSectionDocument[] = [];
     const sectionIdCounts = new Map<string, number>();
     const lines = source.replace(/\r\n/g, '\n').split('\n');
-    const conditionStack: PrayerConditionRuleId[] = [];
+    const conditionStack: ConditionFrame[] = [];
     let documentTitle: string | undefined;
     let currentSection: PrayerSectionDocument | undefined;
     let pendingInlineMarker: { text: string; conditions?: PrayerConditionRuleId[] } | undefined;
     let isSmallText = false;
     let inlineParagraph: PrayerBlock | undefined;
     let appendAfterSmallText = false;
+
+    const getConditions = (): PrayerConditionRuleId[] => {
+      const frame = conditionStack[conditionStack.length - 1];
+      if (!frame) return [];
+      return [
+        ...frame.parentConditions,
+        ...frame.previousRules.map((rule) => `!${rule}` as PrayerConditionRuleId),
+        ...(frame.currentRule ? [frame.currentRule] : []),
+      ];
+    };
 
     const finishInlineParagraph = (): void => {
       inlineParagraph = undefined;
@@ -55,16 +75,40 @@ export class PrayerDocumentParserService {
       if (!line) return;
 
       if (line.startsWith('@if ')) {
-        if (isSmallText) throw new Error(`Condition inside @small block at line ${lineNumber}.`);
-        finishInlineParagraph();
-        const ruleId = line.slice(4).trim() as PrayerConditionRuleId;
+        if (!isSmallText) finishInlineParagraph();
+        const ruleId = line.slice(4).trim() as PrayerConditionRuleName;
         if (!ruleId) throw new Error(`Missing condition rule at line ${lineNumber}.`);
-        conditionStack.push(ruleId);
+        conditionStack.push({
+          parentConditions: getConditions(),
+          previousRules: [],
+          currentRule: ruleId,
+          hasElse: false,
+        });
+        return;
+      }
+      if (line.startsWith('@elsif ')) {
+        if (!isSmallText) finishInlineParagraph();
+        const frame = conditionStack[conditionStack.length - 1];
+        if (!frame) throw new Error(`Unexpected @elsif at line ${lineNumber}.`);
+        if (frame.hasElse) throw new Error(`@elsif after @else at line ${lineNumber}.`);
+        const ruleId = line.slice(7).trim() as PrayerConditionRuleName;
+        if (!ruleId) throw new Error(`Missing condition rule at line ${lineNumber}.`);
+        if (frame.currentRule) frame.previousRules.push(frame.currentRule);
+        frame.currentRule = ruleId;
+        return;
+      }
+      if (line === '@else') {
+        if (!isSmallText) finishInlineParagraph();
+        const frame = conditionStack[conditionStack.length - 1];
+        if (!frame) throw new Error(`Unexpected @else at line ${lineNumber}.`);
+        if (frame.hasElse) throw new Error(`Duplicate @else at line ${lineNumber}.`);
+        if (frame.currentRule) frame.previousRules.push(frame.currentRule);
+        frame.currentRule = undefined;
+        frame.hasElse = true;
         return;
       }
       if (line === '@endif') {
-        if (isSmallText) throw new Error(`Condition inside @small block at line ${lineNumber}.`);
-        finishInlineParagraph();
+        if (!isSmallText) finishInlineParagraph();
         if (!conditionStack.length) throw new Error(`Unexpected @endif at line ${lineNumber}.`);
         conditionStack.pop();
         return;
@@ -103,12 +147,12 @@ export class PrayerDocumentParserService {
         currentSection = {
           id: 'main',
           title: documentTitle,
-          conditions: this.cloneConditions(conditionStack),
+          conditions: this.cloneConditions(getConditions()),
           blocks: [{
             type: 'heading',
             text: documentTitle,
             level: 1,
-            conditions: this.cloneConditions(conditionStack),
+            conditions: this.cloneConditions(getConditions()),
           }],
         };
         return;
@@ -127,12 +171,12 @@ export class PrayerDocumentParserService {
         currentSection = {
           id: this.createSectionId(title, sectionIdCounts),
           title,
-          conditions: this.cloneConditions(conditionStack),
+          conditions: this.cloneConditions(getConditions()),
           blocks: [{
             type: 'heading',
             text: title,
             level: 2,
-            conditions: this.cloneConditions(conditionStack),
+            conditions: this.cloneConditions(getConditions()),
           }],
         };
         return;
@@ -146,7 +190,7 @@ export class PrayerDocumentParserService {
           type: 'heading',
           text: nestedHeadingMatch[2].trim(),
           level: nestedHeadingMatch[1].length as 3 | 4 | 5 | 6,
-          conditions: this.cloneConditions(conditionStack),
+          conditions: this.cloneConditions(getConditions()),
         }, pendingInlineMarker);
         pendingInlineMarker = undefined;
         return;
@@ -156,7 +200,7 @@ export class PrayerDocumentParserService {
         const text = line.slice(1).trim();
         if (!text) throw new Error(`Empty comment block at line ${lineNumber}.`);
         finishInlineParagraph();
-        const conditions = this.cloneConditions(conditionStack);
+        const conditions = this.cloneConditions(getConditions());
         if (this.isInlineMarker(text)) {
           flushPendingMarker();
           pendingInlineMarker = { text, conditions };
@@ -174,7 +218,12 @@ export class PrayerDocumentParserService {
       }
 
       if (inlineParagraph && (isSmallText || appendAfterSmallText)) {
-        this.appendTextSegment(inlineParagraph, line, isSmallText ? 'small' : undefined);
+        this.appendTextSegment(
+          inlineParagraph,
+          line,
+          isSmallText ? 'small' : undefined,
+          this.cloneConditions(getConditions()),
+        );
         if (appendAfterSmallText) finishInlineParagraph();
         return;
       }
@@ -184,7 +233,7 @@ export class PrayerDocumentParserService {
         text: line,
         size: isSmallText ? 'small' : undefined,
         segments: isSmallText ? [{ text: line, size: 'small' }] : undefined,
-        conditions: this.cloneConditions(conditionStack),
+        conditions: this.cloneConditions(getConditions()),
       }, pendingInlineMarker);
       pendingInlineMarker = undefined;
     });
@@ -201,10 +250,15 @@ export class PrayerDocumentParserService {
     paragraph: PrayerBlock,
     text: string,
     size?: 'small',
+    conditions?: PrayerConditionRuleId[],
   ): void {
     const textWithSpacing = ` ${text}`;
     paragraph.text += textWithSpacing;
-    paragraph.segments?.push({ text: textWithSpacing, size });
+    paragraph.segments?.push({
+      text: textWithSpacing,
+      size,
+      ...(conditions ? { conditions } : {}),
+    });
   }
 
   private createSectionId(title: string, counts: Map<string, number>): string {
