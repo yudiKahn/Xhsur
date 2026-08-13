@@ -46,10 +46,45 @@ export class PrayerContentService {
     if (cached) return cached;
 
     const source = await firstValueFrom(this.http.get(assetPath, { responseType: 'text' }));
+    const expandedSource = await this.expandIncludes(source ?? '', assetPath, []);
     const documentId = assetPath.split('/').pop()?.replace(/\.[^.]+$/, '') ?? assetPath;
-    const document = this.parser.parseMarkdownDocument(source ?? '', documentId);
+    const document = this.parser.parseMarkdownDocument(expandedSource, documentId);
     this.documentCache.set(assetPath, document);
     return document;
+  }
+
+  private async expandIncludes(
+    source: string,
+    assetPath: string,
+    includeStack: string[],
+  ): Promise<string> {
+    const lines = source.replace(/\r\n/g, '\n').split('\n');
+    const expandedLines: string[] = [];
+    const assetDirectory = assetPath.slice(0, assetPath.lastIndexOf('/') + 1);
+
+    for (const line of lines) {
+      const includeMatch = /^@include\s+([A-Za-z0-9_-]+)\s*$/u.exec(line.trim());
+      if (!includeMatch) {
+        expandedLines.push(line);
+        continue;
+      }
+
+      const includePath = `${assetDirectory}${includeMatch[1]}.md`;
+      if (includeStack.includes(includePath)) {
+        throw new Error(`Circular prayer source include: ${includePath}`);
+      }
+
+      const includedSource = await firstValueFrom(
+        this.http.get(includePath, { responseType: 'text' }),
+      );
+      expandedLines.push(await this.expandIncludes(
+        includedSource ?? '',
+        includePath,
+        [...includeStack, assetPath],
+      ));
+    }
+
+    return expandedLines.join('\n');
   }
 
   private conditionsMatch(
