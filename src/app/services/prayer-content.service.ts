@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { PrayerDocument } from '../models/prayer-content.model';
-import { PrayerConditionRuleId, PrayerTimingFlags } from '../models/prayer-preset.model';
+import { PrayerCondition, PrayerTimingFlags } from '../models/prayer-preset.model';
 import { PrayerDocumentParserService } from './prayer-document-parser.service';
 import { PrayerTimingService } from './prayer-timing.service';
 
@@ -53,10 +53,18 @@ export class PrayerContentService {
   }
 
   private conditionsMatch(
-    conditions: PrayerConditionRuleId[] | undefined,
+    conditions: PrayerCondition[] | undefined,
     flags: PrayerTimingFlags,
   ): boolean {
-    return (conditions ?? []).every((ruleId) => {
+    return (conditions ?? []).every((condition) => {
+      if (Array.isArray(condition)) {
+        return condition.some((ruleId) => this.ruleMatches(ruleId, flags));
+      }
+      return this.ruleMatches(condition, flags);
+    });
+  }
+
+  private ruleMatches(ruleId: string, flags: PrayerTimingFlags): boolean {
       const isNegated = ruleId.startsWith('!');
       const ruleName = isNegated ? ruleId.slice(1) : ruleId;
       let matches: boolean;
@@ -77,9 +85,9 @@ export class PrayerContentService {
         case 'IsThursday': matches = flags.IsThursday; break;
         case 'IsFriday': matches = flags.IsFriday; break;
         case 'IsSaturday': matches = flags.IsSaturday; break;
+        case 'roshChodesh': matches = flags.roshChodesh; break;
         default: return true;
       }
       return isNegated ? !matches : matches;
-    });
   }
 }

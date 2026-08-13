@@ -166,6 +166,23 @@ describe('PrayerDocumentParserService', () => {
     ]);
   });
 
+  it('parses parenthesized OR conditions and negates all operands for else', () => {
+    const document = parser.parseMarkdownDocument([
+      '# תפילה',
+      '@if(roshChodesh || IsSunday)',
+      'ראש חודש או ראשון',
+      '@else',
+      'אחר',
+      '@endif',
+    ].join('\n'), 'test');
+    const blocks = document.sections[0].blocks.slice(1);
+
+    expect(blocks.map((block) => block.conditions)).toEqual([
+      [['roshChodesh', 'IsSunday']],
+      ['!roshChodesh', '!IsSunday'],
+    ]);
+  });
+
   it('keeps conditional branches inside @small as segments of the surrounding paragraph', () => {
     const document = parser.parseMarkdownDocument([
       '# תפילה',

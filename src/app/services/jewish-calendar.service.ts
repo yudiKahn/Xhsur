@@ -62,6 +62,10 @@ export class JewishCalendarService {
     return this.showTachanun();
   }
 
+  get RoshChodesh(): boolean {
+    return this.isRoshChodesh();
+  }
+
   getJewishDate(date = new Date()): JewishDate {
     return {
       dayOfWeek: date.getDay(),
@@ -83,6 +87,11 @@ export class JewishCalendarService {
       dayOfMonth !== 30 &&
       monthName !== 'ניסן' &&
       monthName !== 'תשרי';
+  }
+
+  isRoshChodesh(date = new Date()): boolean {
+    const { dayOfMonth } = this.getJewishDate(date);
+    return dayOfMonth === 1 || dayOfMonth === 30;
   }
 
   isSummer(date = new Date()): boolean {

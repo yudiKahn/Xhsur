@@ -13,11 +13,14 @@ export type PrayerConditionRuleName =
   | 'IsWednesday'
   | 'IsThursday'
   | 'IsFriday'
-  | 'IsSaturday';
+  | 'IsSaturday'
+  | 'roshChodesh';
 
 export type PrayerConditionRuleId =
   | PrayerConditionRuleName
   | `!${PrayerConditionRuleName}`;
+
+export type PrayerCondition = PrayerConditionRuleId | PrayerConditionRuleId[];
 
 export type HallelMode = 'none' | 'partial' | 'full';
 
@@ -35,6 +38,7 @@ export interface PrayerTimingFlags {
   IsThursday: boolean;
   IsFriday: boolean;
   IsSaturday: boolean;
+  roshChodesh: boolean;
 }
 
 export interface PrayerPresetDefinition {

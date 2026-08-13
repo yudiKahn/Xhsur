@@ -23,6 +23,7 @@ export class PrayerTimingService {
       IsThursday: this.calendar.IsThursday,
       IsFriday: this.calendar.IsFriday,
       IsSaturday: this.calendar.IsSaturday,
+      roshChodesh: this.calendar.RoshChodesh,
     };
   }
 }

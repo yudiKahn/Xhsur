@@ -35,6 +35,18 @@ describe('JewishCalendarService', () => {
     expect(service.showTachanun(new Date(2026, 6, 26, 12))).toBeTrue();
   });
 
+  it('identifies both days of Rosh Chodesh', () => {
+    spyOn(service, 'getJewishDate').and.returnValues(
+      { dayOfWeek: 1, dayOfMonth: 1, monthName: 'אב' },
+      { dayOfWeek: 2, dayOfMonth: 30, monthName: 'תמוז' },
+      { dayOfWeek: 3, dayOfMonth: 2, monthName: 'אלול' },
+    );
+
+    expect(service.isRoshChodesh()).toBeTrue();
+    expect(service.isRoshChodesh()).toBeTrue();
+    expect(service.isRoshChodesh()).toBeFalse();
+  });
+
   it('switches from summer to winter after 22 Tishrei', () => {
     spyOn(service, 'getJewishDate').and.returnValues(
       { dayOfWeek: 0, dayOfMonth: 22, monthName: 'תשרי' },

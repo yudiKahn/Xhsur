@@ -5,6 +5,7 @@ import {
   PrayerSectionDocument,
 } from '../models/prayer-content.model';
 import {
+  PrayerCondition,
   PrayerConditionRuleId,
   PrayerConditionRuleName,
 } from '../models/prayer-preset.model';
@@ -12,9 +13,9 @@ import {
 const INLINE_MARKER_PATTERN = /^[א-ת][א-ת״"'׳]{0,3}$/u;
 
 interface ConditionFrame {
-  parentConditions: PrayerConditionRuleId[];
-  previousRules: PrayerConditionRuleName[];
-  currentRule?: PrayerConditionRuleName;
+  parentConditions: PrayerCondition[];
+  previousRules: PrayerConditionRuleName[][];
+  currentRules?: PrayerConditionRuleName[];
   hasElse: boolean;
 }
 
@@ -29,18 +30,26 @@ export class PrayerDocumentParserService {
     const conditionStack: ConditionFrame[] = [];
     let documentTitle: string | undefined;
     let currentSection: PrayerSectionDocument | undefined;
-    let pendingInlineMarker: { text: string; conditions?: PrayerConditionRuleId[] } | undefined;
+    let pendingInlineMarker: { text: string; conditions?: PrayerCondition[] } | undefined;
     let isSmallText = false;
     let inlineParagraph: PrayerBlock | undefined;
     let appendAfterSmallText = false;
 
-    const getConditions = (): PrayerConditionRuleId[] => {
+    const getConditions = (): PrayerCondition[] => {
       const frame = conditionStack[conditionStack.length - 1];
       if (!frame) return [];
+      const previousConditions: PrayerConditionRuleId[] = [];
+      frame.previousRules.forEach((rules) => {
+        rules.forEach((rule) => previousConditions.push(`!${rule}` as PrayerConditionRuleId));
+      });
       return [
         ...frame.parentConditions,
-        ...frame.previousRules.map((rule) => `!${rule}` as PrayerConditionRuleId),
-        ...(frame.currentRule ? [frame.currentRule] : []),
+        ...previousConditions,
+        ...(frame.currentRules?.length ? [
+          frame.currentRules.length === 1
+            ? frame.currentRules[0]
+            : [...frame.currentRules] as PrayerConditionRuleId[],
+        ] : []),
       ];
     };
 
@@ -74,27 +83,26 @@ export class PrayerDocumentParserService {
       const line = rawLine.trim();
       if (!line) return;
 
-      if (line.startsWith('@if ')) {
+      const conditionMatch = /^@(if|elsif)\s*(?:\((.*)\)|(.*))$/u.exec(line);
+      if (conditionMatch?.[1] === 'if') {
         if (!isSmallText) finishInlineParagraph();
-        const ruleId = line.slice(4).trim() as PrayerConditionRuleName;
-        if (!ruleId) throw new Error(`Missing condition rule at line ${lineNumber}.`);
+        const rules = this.parseConditionRules(conditionMatch[2] ?? conditionMatch[3], lineNumber);
         conditionStack.push({
           parentConditions: getConditions(),
           previousRules: [],
-          currentRule: ruleId,
+          currentRules: rules,
           hasElse: false,
         });
         return;
       }
-      if (line.startsWith('@elsif ')) {
+      if (conditionMatch?.[1] === 'elsif') {
         if (!isSmallText) finishInlineParagraph();
         const frame = conditionStack[conditionStack.length - 1];
         if (!frame) throw new Error(`Unexpected @elsif at line ${lineNumber}.`);
         if (frame.hasElse) throw new Error(`@elsif after @else at line ${lineNumber}.`);
-        const ruleId = line.slice(7).trim() as PrayerConditionRuleName;
-        if (!ruleId) throw new Error(`Missing condition rule at line ${lineNumber}.`);
-        if (frame.currentRule) frame.previousRules.push(frame.currentRule);
-        frame.currentRule = ruleId;
+        const rules = this.parseConditionRules(conditionMatch[2] ?? conditionMatch[3], lineNumber);
+        if (frame.currentRules) frame.previousRules.push(frame.currentRules);
+        frame.currentRules = rules;
         return;
       }
       if (line === '@else') {
@@ -102,8 +110,8 @@ export class PrayerDocumentParserService {
         const frame = conditionStack[conditionStack.length - 1];
         if (!frame) throw new Error(`Unexpected @else at line ${lineNumber}.`);
         if (frame.hasElse) throw new Error(`Duplicate @else at line ${lineNumber}.`);
-        if (frame.currentRule) frame.previousRules.push(frame.currentRule);
-        frame.currentRule = undefined;
+        if (frame.currentRules) frame.previousRules.push(frame.currentRules);
+        frame.currentRules = undefined;
         frame.hasElse = true;
         return;
       }
@@ -250,7 +258,7 @@ export class PrayerDocumentParserService {
     paragraph: PrayerBlock,
     text: string,
     size?: 'small',
-    conditions?: PrayerConditionRuleId[],
+    conditions?: PrayerCondition[],
   ): void {
     const textWithSpacing = ` ${text}`;
     paragraph.text += textWithSpacing;
@@ -280,7 +288,7 @@ export class PrayerDocumentParserService {
   private pushBlock(
     section: PrayerSectionDocument,
     block: PrayerBlock,
-    marker?: { text: string; conditions?: PrayerConditionRuleId[] },
+    marker?: { text: string; conditions?: PrayerCondition[] },
   ): void {
     if (marker && this.conditionsMatch(block.conditions, marker.conditions)) {
       section.blocks.push({ ...block, marker: marker.text });
@@ -292,12 +300,27 @@ export class PrayerDocumentParserService {
     section.blocks.push(block);
   }
 
-  private conditionsMatch(left?: PrayerConditionRuleId[], right?: PrayerConditionRuleId[]): boolean {
+  private conditionsMatch(left?: PrayerCondition[], right?: PrayerCondition[]): boolean {
     return (left?.length ?? 0) === (right?.length ?? 0) &&
-      (left ?? []).every((entry, index) => entry === right?.[index]);
+      (left ?? []).every((entry, index) => {
+        const other = right?.[index];
+        return Array.isArray(entry) && Array.isArray(other)
+          ? entry.length === other.length && entry.every((rule, ruleIndex) => rule === other[ruleIndex])
+          : entry === other;
+      });
   }
 
-  private cloneConditions(conditions: PrayerConditionRuleId[]): PrayerConditionRuleId[] | undefined {
-    return conditions.length ? [...conditions] : undefined;
+  private cloneConditions(conditions: PrayerCondition[]): PrayerCondition[] | undefined {
+    return conditions.length
+      ? conditions.map((condition) => Array.isArray(condition) ? [...condition] : condition)
+      : undefined;
+  }
+
+  private parseConditionRules(expression: string | undefined, lineNumber: number): PrayerConditionRuleName[] {
+    const rules = (expression ?? '').split('||').map((rule) => rule.trim()).filter(Boolean);
+    if (!rules.length || rules.some((rule) => !/^[A-Za-z][A-Za-z0-9-]*$/u.test(rule))) {
+      throw new Error(`Invalid condition expression at line ${lineNumber}.`);
+    }
+    return rules as PrayerConditionRuleName[];
   }
 }
