@@ -33,7 +33,7 @@ export class PrayerContentService {
                 this.conditionsMatch(segment.conditions, flags)),
             })),
         }))
-        .filter((section) => section.blocks.length > 0),
+        .filter((section) => section.blocks.some((block) => block.type !== 'heading')),
     };
   }
 

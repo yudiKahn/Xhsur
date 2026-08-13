@@ -75,7 +75,7 @@
       <p class="reader-error-text">{{ loadError() }}</p>
     }
 
-    @if (!loadError()) {
+    @if (!loadError() && readerReady()) {
       <swiper-container
         #readerSwiper
         class="reader-sections"

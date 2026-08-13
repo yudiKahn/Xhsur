@@ -2,6 +2,7 @@ import { Location } from '@angular/common';
 import {
   CUSTOM_ELEMENTS_SCHEMA,
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   computed,
   DestroyRef,
@@ -70,6 +71,7 @@ export class ReaderPage implements OnInit, AfterViewInit {
   readonly readerFontScale = this.appSettings.readerFontScale;
   readonly prayerTitle = signal('');
   readonly sections = signal<PrayerSectionDocument[]>([]);
+  readonly readerReady = signal(false);
   readonly activeSectionIndex = signal(0);
   readonly activeSection = computed(() => this.sections()[this.activeSectionIndex()]);
   readonly hasSectionNavigation = computed(() => this.sections().length > 1);
@@ -82,6 +84,7 @@ export class ReaderPage implements OnInit, AfterViewInit {
 
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly contentService = inject(PrayerContentService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly location = inject(Location);
   private readonly presetsService = inject(PrayerPresetsService);
@@ -224,6 +227,8 @@ export class ReaderPage implements OnInit, AfterViewInit {
   ): Promise<void> {
     this.isLoading.set(true);
     this.loadError.set(null);
+    this.readerReady.set(false);
+    this.changeDetector.detectChanges();
 
     try {
       const preset = presetId ? this.presetsService.getById(presetId) : undefined;
@@ -238,6 +243,9 @@ export class ReaderPage implements OnInit, AfterViewInit {
       this.prayerTitle.set(document.title);
       this.sections.set(document.sections);
       this.activeSectionIndex.set(Math.max(0, initialIndex));
+      this.readerReady.set(true);
+      this.isLoading.set(false);
+      this.changeDetector.detectChanges();
       requestAnimationFrame(() => {
         this.initializeSwiper();
         const swiper = this.readerSwiper?.nativeElement.swiper;
@@ -252,6 +260,7 @@ export class ReaderPage implements OnInit, AfterViewInit {
       this.prayerTitle.set('');
       this.sections.set([]);
       this.activeSectionIndex.set(0);
+      this.readerReady.set(false);
       this.loadError.set('Failed to load siddur text content.');
     } finally {
       this.isLoading.set(false);
