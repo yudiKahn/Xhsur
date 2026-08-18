@@ -113,6 +113,7 @@ export class PrayerContentService {
         case 'IsWinter': matches = flags.IsWinter; break;
         case 'IsWinter1': matches = flags.IsWinter1; break;
         case 'IsWinter2': matches = flags.IsWinter2; break;
+        case 'elul': matches = flags.elul; break;
         case 'IsSunday': matches = flags.IsSunday; break;
         case 'IsMonday': matches = flags.IsMonday; break;
         case 'IsTuesday': matches = flags.IsTuesday; break;

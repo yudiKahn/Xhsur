@@ -16,6 +16,7 @@ export class PrayerTimingService {
       IsWinter: this.calendar.IsWinter,
       IsWinter1: this.calendar.IsWinter1,
       IsWinter2: this.calendar.IsWinter2,
+      elul: this.calendar.Elul,
       IsSunday: this.calendar.IsSunday,
       IsMonday: this.calendar.IsMonday,
       IsTuesday: this.calendar.IsTuesday,

@@ -17,6 +17,16 @@ describe('JewishCalendarService', () => {
     expect(service.getCurrentDayLabel(new Date(2026, 6, 30, 12))).toBe('יום חמישי ט"ז אב');
   });
 
+  it('formats single-letter Hebrew dates without an undefined prefix', () => {
+    spyOn(service, 'getJewishDate').and.returnValue({
+      dayOfWeek: 5,
+      dayOfMonth: 1,
+      monthName: 'אב',
+    });
+
+    expect(service.getCurrentDayLabel(new Date(2026, 6, 31, 12))).toBe('יום שישי א\' אב');
+  });
+
   it('exposes the weekday and Hebrew month parts', () => {
     expect(service.getJewishDate(new Date(2026, 6, 26, 12))).toEqual({
       dayOfWeek: 0,
@@ -45,6 +55,16 @@ describe('JewishCalendarService', () => {
     expect(service.isRoshChodesh()).toBeTrue();
     expect(service.isRoshChodesh()).toBeTrue();
     expect(service.isRoshChodesh()).toBeFalse();
+  });
+
+  it('identifies the month of Elul', () => {
+    spyOn(service, 'getJewishDate').and.returnValue({
+      dayOfWeek: 1,
+      dayOfMonth: 2,
+      monthName: 'אלול',
+    });
+
+    expect(service.Elul).toBeTrue();
   });
 
   it('switches from summer to winter after 22 Tishrei', () => {

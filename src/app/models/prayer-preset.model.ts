@@ -7,6 +7,7 @@ export type PrayerConditionRuleName =
   | 'IsWinter'
   | 'IsWinter1'
   | 'IsWinter2'
+  | 'elul'
   | 'IsSunday'
   | 'IsMonday'
   | 'IsTuesday'
@@ -31,6 +32,7 @@ export interface PrayerTimingFlags {
   IsWinter: boolean;
   IsWinter1: boolean;
   IsWinter2: boolean;
+  elul: boolean;
   IsSunday: boolean;
   IsMonday: boolean;
   IsTuesday: boolean;

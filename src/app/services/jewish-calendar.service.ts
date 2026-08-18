@@ -58,6 +58,10 @@ export class JewishCalendarService {
     return this.isWinter2();
   }
 
+  get Elul(): boolean {
+    return this.getSeasonMonth(this.today.monthName) === 'elul';
+  }
+
   get ShowTachanun(): boolean {
     return this.showTachanun();
   }
@@ -139,7 +143,7 @@ export class JewishCalendarService {
       20: 'כ',
       30: 'ל',
     };
-    const letters = values[day] ?? `${values[Math.floor(day / 10) * 10]}${ones[day % 10]}`;
+    const letters = values[day] ?? `${values[Math.floor(day / 10) * 10] ?? ''}${ones[day % 10]}`;
 
     return letters.length === 1
       ? `${letters}'`
