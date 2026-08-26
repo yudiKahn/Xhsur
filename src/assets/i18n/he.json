@@ -28,6 +28,17 @@
       "tzais": "צאת הכוכבים"
     }
   },
+  "dailyLesson": {
+    "title": "שיעור יומי",
+    "cards": {
+      "hayomYom": "היום יום",
+      "chumash": "חומש",
+      "tehillim": "תהילים",
+      "tanya": "תניא",
+      "rambam": "רמב״ם"
+    },
+    "hayomYomUnavailable": "אין רשומה זמינה להיום."
+  },
   "settings": {
     "title": "הגדרות",
     "appearance": "מראה",

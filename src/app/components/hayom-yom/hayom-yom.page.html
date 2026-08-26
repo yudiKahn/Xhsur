@@ -1,0 +1,21 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/shiurim" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ 'dailyLesson.cards.hayomYom' | translate }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <main class="hayom-yom-layout siddur-text-body">
+    @if (entry(); as today) {
+      <h1>{{ today.key }}</h1>
+      @for (paragraph of paragraphs; track $index) {
+        <p>{{ paragraph }}</p>
+      }
+    } @else {
+      <p class="hayom-yom-empty">{{ 'dailyLesson.hayomYomUnavailable' | translate }}</p>
+    }
+  </main>
+</ion-content>

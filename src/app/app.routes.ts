@@ -12,6 +12,16 @@ export const appRoutes: Routes = [
       import('./components/reader/reader.page').then((component) => component.ReaderPage),
   },
   {
+    path: 'hayom-yom',
+    loadComponent: () =>
+      import('./components/hayom-yom/hayom-yom.page').then((component) => component.HayomYomPage),
+  },
+  {
+    path: 'shiurim',
+    loadComponent: () =>
+      import('./components/shiurim/shiurim.page').then((component) => component.ShiurimPage),
+  },
+  {
     path: 'about',
     loadComponent: () =>
       import('./components/about/about.page').then((component) => component.AboutPage),

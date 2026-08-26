@@ -28,6 +28,17 @@
       "tzais": "Nightfall"
     }
   },
+  "dailyLesson": {
+    "title": "Daily lesson",
+    "cards": {
+      "hayomYom": "Hayom Yom",
+      "chumash": "Chumash",
+      "tehillim": "Tehillim",
+      "tanya": "Tanya",
+      "rambam": "Rambam"
+    },
+    "hayomYomUnavailable": "No entry is available for today."
+  },
   "settings": {
     "title": "Settings",
     "appearance": "Appearance",

@@ -1,0 +1,27 @@
+.hayom-yom-layout {
+  box-sizing: border-box;
+  width: min(100%, 760px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 22px calc(2rem + env(safe-area-inset-bottom, 0px));
+  color: #000;
+}
+
+.hayom-yom-layout h1 {
+  margin: 0 0 1.5rem;
+  font-size: 1.65em;
+  text-align: center;
+}
+
+.hayom-yom-layout p {
+  margin: 0 0 1.15rem;
+  text-align: justify;
+}
+
+.hayom-yom-layout p:last-child {
+  margin-bottom: 0;
+}
+
+.hayom-yom-empty {
+  text-align: center !important;
+}

@@ -1,0 +1,36 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ 'dailyLesson.title' | translate }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <main class="shiurim-layout">
+    <section class="shiurim-cards" [attr.aria-label]="'dailyLesson.title' | translate">
+      <button class="shiurim-card" type="button" (click)="openHayomYom()">
+        <span>{{ 'dailyLesson.cards.hayomYom' | translate }}</span>
+        <span aria-hidden="true">›</span>
+      </button>
+      <button class="shiurim-card" type="button">
+        <span>{{ 'dailyLesson.cards.chumash' | translate }}</span>
+        <span aria-hidden="true">›</span>
+      </button>
+      <button class="shiurim-card" type="button">
+        <span>{{ 'dailyLesson.cards.tehillim' | translate }}</span>
+        <span aria-hidden="true">›</span>
+      </button>
+      <button class="shiurim-card" type="button">
+        <span>{{ 'dailyLesson.cards.tanya' | translate }}</span>
+        <span aria-hidden="true">›</span>
+      </button>
+      <button class="shiurim-card" type="button">
+        <span>{{ 'dailyLesson.cards.rambam' | translate }}</span>
+        <span aria-hidden="true">›</span>
+      </button>
+    </section>
+
+  </main>
+</ion-content>

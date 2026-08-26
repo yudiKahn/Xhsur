@@ -138,6 +138,10 @@ export class HomePage implements OnInit {
     this.navigateToPreset(preset, section.id);
   }
 
+  openShiurim(): void {
+    void this.router.navigateByUrl('/shiurim');
+  }
+
   async loadZmanim(): Promise<void> {
     this.zmanimError.set(false);
     const location = this.locationService.currentLocation()

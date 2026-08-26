@@ -129,6 +129,15 @@
       }
     </section>
 
+    <section class="preset-group secondary" [attr.aria-label]="'dailyLesson.title' | translate">
+      <button class="prayer-card prayer-card--link" type="button" (click)="openShiurim()">
+        <span class="prayer-card__main">
+          <span class="prayer-card__title">{{ 'dailyLesson.title' | translate }}</span>
+        </span>
+        <span class="prayer-card__link-arrow" aria-hidden="true">›</span>
+      </button>
+    </section>
+
     
 
     <section class="preset-group secondary" [attr.aria-label]="'home.additionalPrayers' | translate">
