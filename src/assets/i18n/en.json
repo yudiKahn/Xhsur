@@ -37,6 +37,10 @@
       "tanya": "Tanya",
       "rambam": "Rambam"
     },
+    "navigation": {
+      "previous": "Previous day",
+      "next": "Next day"
+    },
     "hayomYomUnavailable": "No entry is available for today."
   },
   "settings": {

@@ -9,8 +9,26 @@
 
 <ion-content>
   <main class="hayom-yom-layout siddur-text-body">
+    <nav class="hayom-yom-navigation" aria-label="ניווט בין תאריכים">
+      <ion-button
+        fill="clear"
+        [disabled]="!canGoPrevious()"
+        [attr.aria-label]="'dailyLesson.navigation.previous' | translate"
+        (click)="goPrevious()"
+      >
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+      <span aria-live="polite">{{ currentWeekday() }} {{ currentKey() }}</span>
+      <ion-button
+        fill="clear"
+        [disabled]="!canGoNext()"
+        [attr.aria-label]="'dailyLesson.navigation.next' | translate"
+        (click)="goNext()"
+      >
+        <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
+      </ion-button>
+    </nav>
     @if (entry(); as today) {
-      <h1>{{ today.key }}</h1>
       @for (paragraph of paragraphs; track $index) {
         <p>{{ paragraph }}</p>
       }

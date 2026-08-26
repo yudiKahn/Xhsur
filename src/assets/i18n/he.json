@@ -37,6 +37,10 @@
       "tanya": "תניא",
       "rambam": "רמב״ם"
     },
+    "navigation": {
+      "previous": "היום הקודם",
+      "next": "היום הבא"
+    },
     "hayomYomUnavailable": "אין רשומה זמינה להיום."
   },
   "settings": {

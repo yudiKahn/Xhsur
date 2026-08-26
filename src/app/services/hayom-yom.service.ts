@@ -9,12 +9,15 @@ export class HayomYomService {
   private readonly calendar = inject(JewishCalendarService);
 
   getTodayEntry(): { key: string; text: string } | null {
-    const key = this.getTodayKey();
+    return this.getEntry(this.getTodayKey());
+  }
+
+  getEntry(key: string): { key: string; text: string } | null {
     const text = hayomYomEntries[key];
     return text ? { key, text } : null;
   }
 
-  private getTodayKey(): string {
+  getTodayKey(): string {
     const { monthName, dayOfMonth } = this.calendar.today;
     const month = monthName.includes('מנחם אב') || monthName === 'אב'
       ? 'אב'
@@ -28,6 +31,24 @@ export class HayomYomService {
               ? 'סיון'
               : monthName.replace(/[״"׳'\s]/gu, '');
     return `${this.toHebrewDay(dayOfMonth)} ${month}`;
+  }
+
+  getAdjacentKey(key: string, direction: -1 | 1): string | null {
+    const keys = Object.keys(hayomYomEntries);
+    const index = keys.indexOf(key);
+    const adjacentIndex = index + direction;
+    return adjacentIndex >= 0 && adjacentIndex < keys.length ? keys[adjacentIndex] : null;
+  }
+
+  getWeekdayForKey(key: string): string {
+    const keys = Object.keys(hayomYomEntries);
+    const todayIndex = keys.indexOf(this.getTodayKey());
+    const targetIndex = keys.indexOf(key);
+    if (todayIndex < 0 || targetIndex < 0) return '';
+
+    const date = new Date();
+    date.setDate(date.getDate() + targetIndex - todayIndex);
+    return new Intl.DateTimeFormat('he-IL', { weekday: 'long' }).format(date);
   }
 
   private toHebrewDay(day: number): string {
