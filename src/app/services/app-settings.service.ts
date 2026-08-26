@@ -1,5 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, inject, signal } from '@angular/core';
+import { App } from '@capacitor/app';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import {
   AppTheme,
@@ -18,10 +19,13 @@ export class AppSettingsService {
   readonly readerFontScale = signal(this.storage.readerFontScale);
   readonly keepScreenOn = signal(this.storage.keepScreenOn);
   readonly keepAwakeSupported = signal(true);
+  private keepAwakeRestoring = false;
 
   constructor() {
     this.applyTheme();
     this.systemTheme?.addEventListener('change', this.onSystemThemeChange);
+    this.document.addEventListener('visibilitychange', this.onVisibilityChange);
+    void App.addListener('resume', this.onAppResume);
     void this.initializeKeepAwake();
   }
 
@@ -50,10 +54,17 @@ export class AppSettingsService {
       this.storage.keepScreenOn = enabled;
       return true;
     } catch {
-      this.keepAwakeSupported.set(false);
       return false;
     }
   }
+
+  private readonly onVisibilityChange = (): void => {
+    if (this.document.visibilityState === 'visible') void this.restoreKeepAwake();
+  };
+
+  private readonly onAppResume = (): void => {
+    void this.restoreKeepAwake();
+  };
 
   private readonly onSystemThemeChange = (): void => {
     if (this.theme() === 'system') this.applyTheme();
@@ -70,9 +81,22 @@ export class AppSettingsService {
     try {
       const { isSupported } = await KeepAwake.isSupported();
       this.keepAwakeSupported.set(isSupported);
-      if (isSupported && this.keepScreenOn()) await KeepAwake.keepAwake();
+      if (isSupported) await this.restoreKeepAwake();
     } catch {
       this.keepAwakeSupported.set(false);
+    }
+  }
+
+  private async restoreKeepAwake(): Promise<void> {
+    if (!this.keepScreenOn() || this.keepAwakeRestoring) return;
+
+    this.keepAwakeRestoring = true;
+    try {
+      await KeepAwake.keepAwake();
+    } catch {
+      // A temporary lifecycle/browser failure should not disable the setting.
+    } finally {
+      this.keepAwakeRestoring = false;
     }
   }
 }
