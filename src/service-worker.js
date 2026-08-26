@@ -1,5 +1,4 @@
 const APP_CACHE = 'siddur-app-v1';
-const PDF_CACHE = 'siddur-pdf-v1';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -22,7 +21,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key !== APP_CACHE && key !== PDF_CACHE)
+          .filter((key) => key !== APP_CACHE)
           .map((key) => caches.delete(key)),
       ),
     ),
@@ -46,11 +45,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.endsWith('.pdf')) {
-    event.respondWith(handlePdfRequest(request));
-    return;
-  }
-
   event.respondWith(handleStaticRequest(request));
 });
 
@@ -63,21 +57,6 @@ async function handleNavigationRequest(request) {
   } catch {
     return caches.match('./');
   }
-}
-
-async function handlePdfRequest(request) {
-  const cache = await caches.open(PDF_CACHE);
-  const cachedResponse = await cache.match(request);
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-
-  const response = await fetch(request);
-  if (response.ok) {
-    cache.put(request, response.clone());
-  }
-
-  return response;
 }
 
 async function handleStaticRequest(request) {

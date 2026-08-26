@@ -82,19 +82,6 @@
   "reader": {
     "sections": {
       "title": "מקטעים"
-    },
-    "alertTitle": {
-      "loadError": "שגיאה בטעינת ה-PDF",
-      "missingPdf": "חסר קובץ PDF"
-    },
-    "missingPdf": {
-      "body": "קובץ הסידור עדיין לא זמין באפליקציה."
-    },
-    "errors": {
-      "pdfLoadFailed": "טעינת קובץ ה-PDF נכשלה.",
-      "pdfLoadFailedWithStatus": "טעינת קובץ ה-PDF נכשלה. קוד שגיאה: {{status}}.",
-      "canvasUnavailable": "רינדור הדפים אינו זמין במכשיר זה.",
-      "pdfRenderFailed": "רינדור ה-PDF נכשל."
     }
   },
   "presets": {

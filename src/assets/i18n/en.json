@@ -84,19 +84,6 @@
   "reader": {
     "sections": {
       "title": "Sections"
-    },
-    "alertTitle": {
-      "loadError": "PDF loading error",
-      "missingPdf": "PDF file missing"
-    },
-    "missingPdf": {
-      "body": "The Siddur PDF is not yet available in the app."
-    },
-    "errors": {
-      "pdfLoadFailed": "Failed to load the PDF file.",
-      "pdfLoadFailedWithStatus": "Failed to load the PDF file. Status code: {{status}}.",
-      "canvasUnavailable": "Page rendering is not available on this device.",
-      "pdfRenderFailed": "Failed to render the PDF."
     }
   },
   "presets": {
