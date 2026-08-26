@@ -98,11 +98,34 @@
 
     <section class="preset-group" [attr.aria-label]="'home.choosePrayer' | translate">
       @for (preset of primaryPresets; track trackByPreset($index, preset)) {
-        <button class="prayer-card" type="button" (click)="openPreset(preset)">
-          <!-- <img class="prayer-card__icon" [src]="getPresetIcon(preset.id)" alt="" /> -->
-          <span class="prayer-card__title">{{ preset.titleKey | translate }}</span>
-          <span class="prayer-card__chevron" aria-hidden="true">›</span>
-        </button>
+        <article class="prayer-card">
+          <button class="prayer-card__main" type="button" (click)="openPreset(preset)">
+            <span class="prayer-card__title">{{ preset.titleKey | translate }}</span>
+          </button>
+          <button
+            class="prayer-card__expand"
+            type="button"
+            [attr.aria-label]="'home.openSections' | translate"
+            [attr.aria-expanded]="isPresetExpanded(preset.id)"
+            [attr.aria-controls]="'preset-sections-' + preset.id"
+            (click)="togglePresetSections(preset, $event)"
+          >
+            @if (isLoadingPresetSections(preset.id)) {
+              <ion-spinner name="crescent"></ion-spinner>
+            } @else {
+              <ion-icon name="chevron-down-outline" aria-hidden="true"></ion-icon>
+            }
+          </button>
+          @if (isPresetExpanded(preset.id)) {
+            <div class="prayer-card__sections" [id]="'preset-sections-' + preset.id">
+              @for (section of getPresetSections(preset.id); track section.id) {
+                <button class="prayer-card__section" type="button" (click)="openPresetSection(preset, section)">
+                  {{ section.title }}
+                </button>
+              }
+            </div>
+          }
+        </article>
       }
     </section>
 
@@ -110,11 +133,34 @@
 
     <section class="preset-group secondary" [attr.aria-label]="'home.additionalPrayers' | translate">
       @for (preset of supplementalPresets; track trackByPreset($index, preset)) {
-        <button class="prayer-card" type="button" (click)="openPreset(preset)">
-          <!-- <img class="prayer-card__icon" [src]="getPresetIcon(preset.id)" alt="" /> -->
-          <span class="prayer-card__title">{{ preset.titleKey | translate }}</span>
-          <span class="prayer-card__chevron" aria-hidden="true">›</span>
-        </button>
+        <article class="prayer-card">
+          <button class="prayer-card__main" type="button" (click)="openPreset(preset)">
+            <span class="prayer-card__title">{{ preset.titleKey | translate }}</span>
+          </button>
+          <button
+            class="prayer-card__expand"
+            type="button"
+            [attr.aria-label]="'home.openSections' | translate"
+            [attr.aria-expanded]="isPresetExpanded(preset.id)"
+            [attr.aria-controls]="'preset-sections-' + preset.id"
+            (click)="togglePresetSections(preset, $event)"
+          >
+            @if (isLoadingPresetSections(preset.id)) {
+              <ion-spinner name="crescent"></ion-spinner>
+            } @else {
+              <ion-icon name="chevron-down-outline" aria-hidden="true"></ion-icon>
+            }
+          </button>
+          @if (isPresetExpanded(preset.id)) {
+            <div class="prayer-card__sections" [id]="'preset-sections-' + preset.id">
+              @for (section of getPresetSections(preset.id); track section.id) {
+                <button class="prayer-card__section" type="button" (click)="openPresetSection(preset, section)">
+                  {{ section.title }}
+                </button>
+              }
+            </div>
+          }
+        </article>
       }
     </section>
   </main>

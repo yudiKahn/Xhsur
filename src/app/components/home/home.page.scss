@@ -108,21 +108,33 @@
 
 .prayer-card {
   width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
   min-height: 70px;
-  display: flex;
-  flex-direction: row;
-  place-content: space-between;
-  align-items: center;
-  gap: 18px;
-  padding: 14px 25px;
+  overflow: hidden;
+  padding: 0;
   border: 1px solid rgba(var(--app-color-secondary-rgb), 0.025);
   border-radius: 20px;
-  color: var(--home-ink);
   background: rgba(var(--app-color-surface-rgb), 0.96);
   box-shadow: 0 8px 24px rgba(var(--app-color-secondary-rgb), 0.08);
+  color: var(--home-ink);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.prayer-card:has(.prayer-card__sections) {
+  grid-template-rows: auto auto;
+}
+
+.prayer-card__main {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  padding: 14px 25px;
+  border: 0;
+  color: var(--home-ink);
+  background: transparent;
   text-align: start;
   cursor: pointer;
-  transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
 .prayer-card:active {
@@ -130,10 +142,12 @@
   box-shadow: 0 4px 14px rgba(var(--app-color-secondary-rgb), 0.1);
 }
 
-.prayer-card:focus-visible,
+.prayer-card__main:focus-visible,
+.prayer-card__expand:focus-visible,
+.prayer-card__section:focus-visible,
 .home-info-button:focus-visible {
   outline: 3px solid rgba(var(--app-color-primary-rgb), 0.5);
-  outline-offset: 3px;
+  outline-offset: -3px;
 }
 
 .prayer-card__icon {
@@ -149,13 +163,75 @@
   line-height: 1.2;
 }
 
-.prayer-card__chevron {
+.prayer-card__expand {
+  width: 56px;
+  min-height: 70px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
   color: var(--home-ink);
-  font-family: Arial, sans-serif;
-  font-size: 2.45rem;
-  font-weight: 200;
-  line-height: 1;
-  text-align: end;
+  background: transparent;
+  cursor: pointer;
+}
+
+.prayer-card__expand ion-icon {
+  width: 24px;
+  height: 24px;
+  transition: transform 220ms ease;
+}
+
+.prayer-card__expand[aria-expanded="true"] ion-icon {
+  transform: rotate(180deg);
+}
+
+.prayer-card__expand ion-spinner {
+  width: 20px;
+  height: 20px;
+}
+
+.prayer-card__sections {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  padding: 0 18px 14px;
+  border-top: 1px solid rgba(var(--app-color-primary-rgb), 0.15);
+  animation: prayer-card-sections-in 220ms ease both;
+}
+
+@keyframes prayer-card-sections-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.prayer-card__section {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--home-ink);
+  background: rgba(var(--app-color-primary-rgb), 0.07);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.prayer-card__section:active {
+  background: rgba(var(--app-color-primary-rgb), 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prayer-card__expand ion-icon,
+  .prayer-card__sections {
+    animation: none;
+    transition: none;
+  }
 }
 
 .home-section-divider {
@@ -191,9 +267,16 @@
 
   .prayer-card {
     min-height: 68px;
-    grid-template-columns: 60px 1fr 26px;
     gap: 13px;
+  }
+
+  .prayer-card__main {
+    min-height: 68px;
     padding-inline: 19px;
+  }
+
+  .prayer-card__expand {
+    min-height: 68px;
   }
 
   .prayer-card__icon {

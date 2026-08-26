@@ -17,10 +17,12 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   informationCircleOutline,
+  chevronDownOutline,
   menu,
   refreshOutline,
   settingsOutline,
 } from 'ionicons/icons';
+import { PrayerSectionDocument } from '../../models/prayer-content.model';
 import { PrayerPresetSummary } from '../../models/prayer-preset.model';
 import { DailyZmanim } from '../../models/daily-zmanim.model';
 import { PrayerContentService } from '../../services/prayer-content.service';
@@ -57,6 +59,9 @@ export class HomePage implements OnInit {
   presets: PrayerPresetSummary[] = [];
   primaryPresets: PrayerPresetSummary[] = [];
   supplementalPresets: PrayerPresetSummary[] = [];
+  readonly expandedPresetIds = signal<Set<string>>(new Set());
+  readonly loadingSectionPresetIds = signal<Set<string>>(new Set());
+  private readonly presetSections = new Map<string, PrayerSectionDocument[]>();
   private readonly prayerContentService = inject(PrayerContentService);
   private readonly prayerPresetsService = inject(PrayerPresetsService);
   private readonly locationService = inject(LocationService);
@@ -67,6 +72,7 @@ export class HomePage implements OnInit {
   constructor() {
     addIcons({
       'information-circle-outline': informationCircleOutline,
+      'chevron-down-outline': chevronDownOutline,
       'menu': menu,
       'refresh-outline': refreshOutline,
       'settings-outline': settingsOutline,
@@ -89,6 +95,47 @@ export class HomePage implements OnInit {
 
   trackByPreset(index: number, preset: PrayerPresetSummary): string {
     return preset.id;
+  }
+
+  async togglePresetSections(preset: PrayerPresetSummary, event: MouseEvent): Promise<void> {
+    event.stopPropagation();
+
+    if (this.expandedPresetIds().has(preset.id)) {
+      this.updateSetSignal(this.expandedPresetIds, preset.id, false);
+      return;
+    }
+
+    let sections = this.presetSections.get(preset.id);
+    if (!sections) {
+      this.updateSetSignal(this.loadingSectionPresetIds, preset.id, true);
+      try {
+        const document = await this.prayerContentService.getPrayerDocument(preset.assetPath);
+        sections = document.sections;
+        this.presetSections.set(preset.id, sections);
+      } catch {
+        return;
+      } finally {
+        this.updateSetSignal(this.loadingSectionPresetIds, preset.id, false);
+      }
+    }
+
+    if (sections?.length) this.updateSetSignal(this.expandedPresetIds, preset.id, true);
+  }
+
+  isPresetExpanded(presetId: string): boolean {
+    return this.expandedPresetIds().has(presetId);
+  }
+
+  isLoadingPresetSections(presetId: string): boolean {
+    return this.loadingSectionPresetIds().has(presetId);
+  }
+
+  getPresetSections(presetId: string): PrayerSectionDocument[] {
+    return this.presetSections.get(presetId) ?? [];
+  }
+
+  openPresetSection(preset: PrayerPresetSummary, section: PrayerSectionDocument): void {
+    this.navigateToPreset(preset, section.id);
   }
 
   async loadZmanim(): Promise<void> {
@@ -138,6 +185,17 @@ export class HomePage implements OnInit {
         ...(openSectionMenu ? { openSectionMenu: true } : {}),
       },
     });
+  }
+
+  private updateSetSignal(
+    target: typeof this.expandedPresetIds,
+    value: string,
+    enabled: boolean,
+  ): void {
+    const next = new Set(target());
+    if (enabled) next.add(value);
+    else next.delete(value);
+    target.set(next);
   }
 
   async refreshApp(): Promise<void> {

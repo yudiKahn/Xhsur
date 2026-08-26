@@ -16,6 +16,7 @@
   "home": {
     "choosePrayer": "Choose a prayer",
     "additionalPrayers": "Additional prayers",
+    "openSections": "Open prayer sections",
     "zmanim": {
       "title": "Daily zmanim",
       "open": "Show daily zmanim",
