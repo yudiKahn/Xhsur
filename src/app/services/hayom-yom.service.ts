@@ -53,7 +53,10 @@ export class HayomYomService {
 
   private toHebrewDay(day: number): string {
     const ones = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
-    const values: Record<number, string> = { 10: 'י', 15: 'טו', 16: 'טז', 20: 'כ', 30: 'ל' };
+    const specialDays: Record<number, string> = { 15: 'טו', 16: 'טז' };
+    if (specialDays[day]) return specialDays[day];
+
+    const values: Record<number, string> = { 10: 'י', 20: 'כ', 30: 'ל' };
     return `${values[Math.floor(day / 10) * 10] ?? ''}${ones[day % 10]}`;
   }
 }

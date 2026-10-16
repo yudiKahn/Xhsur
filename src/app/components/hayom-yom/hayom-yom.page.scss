@@ -4,7 +4,7 @@
   min-height: 100%;
   margin: 0 auto;
   padding: 1.5rem 22px calc(2rem + env(safe-area-inset-bottom, 0px));
-  color: #000;
+  color: var(--app-color-secondary);
 }
 
 .hayom-yom-layout h1 {
@@ -19,7 +19,7 @@
   justify-content: space-between;
   min-height: 48px;
   margin-bottom: 1.25rem;
-  color: #000;
+  color: var(--app-color-secondary);
   font-family: "Drugulin CLM", "Times New Roman", serif;
   font-size: 1.25em;
   font-weight: 700;
